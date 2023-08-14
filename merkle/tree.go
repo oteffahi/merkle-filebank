@@ -16,7 +16,7 @@ func (m MerkleTree) GetMerkleRoot() [32]byte {
 	if len(m.hashes) > 0 {
 		return m.hashes[0]
 	}
-	return [32]byte{0}
+	return [32]byte{}
 }
 
 func (m MerkleTree) GetTreeInHex() []string {
