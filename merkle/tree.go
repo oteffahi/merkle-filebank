@@ -9,12 +9,12 @@ import (
 )
 
 type MerkleTree struct {
-	hashes [][32]byte
+	Hashes [][32]byte
 }
 
 func (m MerkleTree) GetMerkleRoot() [32]byte {
-	if len(m.hashes) > 0 {
-		return m.hashes[0]
+	if len(m.Hashes) > 0 {
+		return m.Hashes[0]
 	}
 	return [32]byte{}
 }
@@ -22,7 +22,7 @@ func (m MerkleTree) GetMerkleRoot() [32]byte {
 func (m MerkleTree) GetTreeInHex() []string {
 	var hexTree []string
 
-	for _, hash := range m.hashes {
+	for _, hash := range m.Hashes {
 		hexTree = append(hexTree, hex.EncodeToString(hash[:]))
 	}
 
@@ -41,7 +41,7 @@ func (m *MerkleTree) BuildMerkeTree(files [][]byte) error {
 
 	tree := merkleTreeFromLeafs(leafs)
 
-	m.hashes = tree
+	m.Hashes = tree
 
 	return nil
 }
