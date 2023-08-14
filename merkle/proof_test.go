@@ -30,8 +30,8 @@ func TestNominalProof(t *testing.T) {
 
 	expectedProof := []string{
 		"0ff22d9aeb032108d73111e206db99a18758707742ebb6ef3ce7a11ce238b3ee",
-		"7896435a0622d2f07caafa76d28c23e2bce225aefceeef013495a828f4492436",
 		"d22151099bfd35343be610eb424dd95024626ad051a4f2bc1dc76d47adbca40b",
+		"7896435a0622d2f07caafa76d28c23e2bce225aefceeef013495a828f4492436",
 	}
 
 	if len(gotProof) != len(expectedProof) {

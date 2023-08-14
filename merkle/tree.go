@@ -78,29 +78,18 @@ func merkleTreeFromLeafs(leafs [][32]byte) [][32]byte {
 		return cr.CompareHashes(leafs[i], leafs[j])
 	})
 
-	var tree [][32]byte
+	treeLen := len(leafs)*2 - 1
+	tree := make([][32]byte, treeLen)
 
-	level := leafs
-
-	for len(level) > 1 {
-		var newLevel [][32]byte
-
-		for i := 0; i < len(level)-1; i += 2 {
-			newNode := concatAndHash(level[i], level[i+1])
-			newLevel = append(newLevel, newNode)
-		}
-
-		if len(level)%2 != 0 { // uneven number of nodes : final node must be moved to newLevel
-			newLevel = append(newLevel, level[len(level)-1])
-			level = level[:len(level)-1]
-		}
-		// commit current level to tree
-		tree = append(level, tree...)
-		// next iteration on newLevel
-		level = newLevel
+	// insert leafs at end of buffer in reverse order
+	for i, leaf := range leafs {
+		tree[treeLen-1-i] = leaf
 	}
-	// append merkle root to tree
-	tree = append(level, tree...)
+
+	// compute nodes
+	for i := treeLen - len(leafs) - 1; i >= 0; i-- {
+		tree[i] = concatAndHash(tree[2*i+1], tree[2*i+2])
+	}
 
 	return tree
 }

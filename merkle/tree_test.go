@@ -28,7 +28,7 @@ func TestNominalTree(t *testing.T) {
 	d := []byte("TEST4")
 	e := []byte("TEST5")
 	files := [][]byte{e, b, c, d, a}
-	expectedRoot := "d49293f7d646a5ceb762e3f36ceeef2d0d83918ddae6a610961d2fa231b2a7fa"
+	expectedRoot := "49e5171f64c94c819582d1b433156a604b916ef5774765be78c6dc646585a7fa"
 
 	err := tree.BuildMerkeTree(files)
 
