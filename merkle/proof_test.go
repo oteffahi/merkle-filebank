@@ -9,39 +9,64 @@ func TestNominalProof(t *testing.T) {
 	var tree MerkleTree
 
 	// testData
-	a := []byte("TEST1")
-	b := []byte("TEST2")
-	c := []byte("TEST3")
-	d := []byte("TEST4")
-	e := []byte("TEST5")
-	files := [][]byte{e, b, c, d, a}
+	var files [][]byte
+	for i := 0; i < 100; i++ {
+		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
+	}
 
 	err := tree.BuildMerkeTree(files)
 
-	proof, err := tree.GenerateProofForFile(a)
+	if err != nil {
+		t.Errorf("Error occured when generating tree: %v", err)
+		return
+	}
+
+	for i, file := range files {
+		proof, err := tree.GenerateProofForFile(file)
+		if err != nil {
+			t.Errorf("Error occured when generating proof: %v", err)
+			return
+		}
+		isValidProof, err := proof.VerifyFileProof(file, tree.GetMerkleRoot())
+		if err != nil {
+			t.Errorf("Error occured when verifying proof: %v", err)
+			return
+		}
+		if !isValidProof {
+			t.Errorf("Failed to verify proof for file %v", i)
+			return
+		}
+	}
+}
+
+func TestFailVerification(t *testing.T) {
+	var tree MerkleTree
+
+	// testData
+	var files [][]byte
+	for i := 0; i < 100; i++ {
+		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
+	}
+
+	err := tree.BuildMerkeTree(files)
+
+	if err != nil {
+		t.Errorf("Error occured when generating tree: %v", err)
+		return
+	}
+
+	proof, err := tree.GenerateProofForFile(files[0])
 	if err != nil {
 		t.Errorf("Error occured when generating proof: %v", err)
 		return
 	}
-
-	gotProof := proof.GetProofInHex()
-	// debugging
-	fmt.Println(gotProof)
-
-	expectedProof := []string{
-		"0ff22d9aeb032108d73111e206db99a18758707742ebb6ef3ce7a11ce238b3ee",
-		"d22151099bfd35343be610eb424dd95024626ad051a4f2bc1dc76d47adbca40b",
-		"7896435a0622d2f07caafa76d28c23e2bce225aefceeef013495a828f4492436",
-	}
-
-	if len(gotProof) != len(expectedProof) {
-		t.Errorf("Generated proof is not equal to expected")
+	isValidProof, err := proof.VerifyFileProof(files[5], tree.GetMerkleRoot())
+	if err != nil {
+		t.Errorf("Error occured when verifying proof: %v", err)
 		return
 	}
-	for i := range expectedProof {
-		if expectedProof[i] != gotProof[i] {
-			t.Errorf("Generated proof is not equal to expected")
-			return
-		}
+	if isValidProof {
+		t.Errorf("Expected proof verification to fail, got success")
+		return
 	}
 }

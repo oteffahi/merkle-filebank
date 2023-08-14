@@ -3,6 +3,8 @@ package merkle
 import (
 	"encoding/hex"
 	"errors"
+
+	cr "github.com/oteffahi/merkle-filebank/cryptography"
 )
 
 type MerkleProof struct {
@@ -51,6 +53,23 @@ func (p MerkleProof) GetProofInHex() []string {
 	}
 
 	return hexProof
+}
+
+func (p MerkleProof) VerifyFileProof(file []byte, merkleRoot [32]byte) (bool, error) {
+	if len(p.Hashes) == 0 {
+		return false, errors.New("Cannot verify empty proof")
+	}
+
+	leaf := cr.HashTwice(file)
+	return p.verifyLeafProof(leaf, merkleRoot), nil
+}
+
+func (p MerkleProof) verifyLeafProof(leaf [32]byte, merkleRoot [32]byte) bool {
+	buff := leaf
+	for _, hash := range p.Hashes {
+		buff = concatAndHash(buff, hash)
+	}
+	return buff == merkleRoot
 }
 
 func getNodeParentIndex(index int) int {
