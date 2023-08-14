@@ -1,0 +1,40 @@
+syntax="proto3";
+
+package filebank;
+
+option go_package = "./proto";
+
+service FileBankService {
+  rpc AddNode(AddNodeRequest)
+    returns (AddNodeResponse);
+
+  rpc UploadFiles(stream UploadFilesRequest)
+    returns (stream UploadFilesResponse);
+    
+  rpc DownloadFiles(stream DownloadFilesRequest)
+    returns (stream DownloadFilesResponse);
+}
+
+message AddNodeRequest {
+  bytes data = 1;
+}
+
+message AddNodeResponse {
+  bytes data = 1;
+}
+
+message UploadFilesRequest {
+  bytes data = 1;
+}
+
+message UploadFilesResponse {
+  bytes data = 1;
+}
+
+message DownloadFilesRequest {
+  bytes data = 1;
+}
+
+message DownloadFilesResponse {
+  bytes data = 1;
+}
