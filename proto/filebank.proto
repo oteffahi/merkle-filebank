@@ -5,8 +5,7 @@ package filebank;
 option go_package = "./proto";
 
 service FileBankService {
-  rpc AddNode(AddNodeRequest)
-    returns (AddNodeResponse);
+  rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
 
   rpc UploadFiles(stream UploadFilesRequest)
     returns (stream UploadFilesResponse);
@@ -16,11 +15,13 @@ service FileBankService {
 }
 
 message AddNodeRequest {
-  bytes data = 1;
+  bytes nonce = 1;
 }
 
 message AddNodeResponse {
-  bytes data = 1;
+  bytes nonce = 1;
+  bytes pubkey = 2;
+  bytes signature = 3;
 }
 
 message UploadFilesRequest {
