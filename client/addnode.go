@@ -30,7 +30,7 @@ func CallAddNode(endpoint string) error {
 		return err
 	}
 
-	if !validateNonce(resp.Nonce, nonce) {
+	if !cr.ValidateNonce(resp.Nonce, nonce) {
 		return errors.New("Invalid response message: bad nonce")
 	}
 	// TODO: verify signature
@@ -43,18 +43,6 @@ func CallAddNode(endpoint string) error {
 	}
 	// TODO: write pubkey and endpoint to file
 	return nil
-}
-
-func validateNonce(received []byte, sent []byte) bool {
-	if len(received) != len(sent) {
-		return false
-	}
-	for i := 0; i < len(received); i++ {
-		if received[i] != sent[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func verifySignature(resp *pb.AddNodeResponse) (bool, error) {

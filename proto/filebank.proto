@@ -25,11 +25,36 @@ message AddNodeResponse {
 }
 
 message UploadFilesRequest {
-  bytes data = 1;
+  oneof phase {
+    ChallengeResponse signed_resp = 5;
+    FileMessage file = 6;
+    bytes nonce = 7;
+  }
 }
 
 message UploadFilesResponse {
-  bytes data = 1;
+  oneof phase {
+    bytes nonce = 4;
+    MerkleRoot merkle_response = 5;
+  }
+}
+
+message ChallengeResponse {
+  bytes nonce = 1;
+  bytes pubkey = 2;
+  int32 nbfiles = 3;
+  bytes signature = 4;
+}
+
+message FileMessage {
+  int32 seq = 1;
+  bytes content = 2;
+}
+
+message MerkleRoot {
+  bytes nonce = 1;
+  bytes merkle_root = 2;
+  bytes signature = 3;
 }
 
 message DownloadFilesRequest {
