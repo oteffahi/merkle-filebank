@@ -58,9 +58,20 @@ message MerkleRoot {
 }
 
 message DownloadFilesRequest {
-  bytes data = 1;
+  bytes nonce = 1;
+  bytes pubkey = 2;
+  int32 file_num = 3;
+  bytes signature = 4;
 }
 
 message DownloadFilesResponse {
-  bytes data = 1;
+  oneof phase {
+    bytes nonce = 3;
+    FileAndProof fp = 4;
+  }
+}
+
+message FileAndProof {
+  bytes proof = 1;
+  bytes file = 2;
 }
