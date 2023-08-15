@@ -17,11 +17,10 @@ func CallAddNode(endpoint string) error {
 	}
 
 	conn, client, err := connectToNode(endpoint)
-	defer conn.Close()
-
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
