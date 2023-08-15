@@ -111,6 +111,8 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 		return errors.New("Invalid message type")
 	}
 
+	// TODO: write everything to disk
+
 	// TODO: sign response
 	sign, err := proto.Marshal(req3)
 	if err != nil {
@@ -127,9 +129,8 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 		},
 	}
 
+	// only send when successfuly written to disk
 	stream.Send(resp)
-
-	// TODO: write everything to disk
 
 	return nil
 }
