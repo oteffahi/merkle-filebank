@@ -18,11 +18,13 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 	if err != nil {
 		return err
 	}
-	stream.Send(&pb.UploadFilesResponse{
+	if err := stream.Send(&pb.UploadFilesResponse{
 		Phase: &pb.UploadFilesResponse_Nonce{
 			Nonce: serverNonce,
 		},
-	})
+	}); err != nil {
+		return err
+	}
 
 	req1, err := stream.Recv()
 	if err == io.EOF {
@@ -132,8 +134,9 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 	}
 
 	// only send when successfuly written to disk
-	stream.Send(resp)
-
+	if err := stream.Send(resp); err != nil {
+		return err
+	}
 	return nil
 }
 

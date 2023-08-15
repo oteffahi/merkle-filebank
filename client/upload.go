@@ -68,7 +68,9 @@ func CallUploadFiles(endpoint string, files [][]byte) error {
 			},
 		},
 	}
-	stream.Send(req1)
+	if err := stream.Send(req1); err != nil {
+		return err
+	}
 
 	// Send files
 	for i, file := range files {
@@ -80,7 +82,9 @@ func CallUploadFiles(endpoint string, files [][]byte) error {
 				},
 			},
 		}
-		stream.Send(req2)
+		if err := stream.Send(req2); err != nil {
+			return err
+		}
 	}
 	// send Nonce
 	clientNonce, err := cr.Random12BytesNonce()
@@ -92,8 +96,9 @@ func CallUploadFiles(endpoint string, files [][]byte) error {
 			Nonce: clientNonce,
 		},
 	}
-	stream.Send(req3)
-
+	if err := stream.Send(req3); err != nil {
+		return err
+	}
 	// receive signed response
 	resp2, err := stream.Recv()
 	if err == io.EOF {
