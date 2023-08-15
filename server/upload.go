@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"log"
 
 	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	"github.com/oteffahi/merkle-filebank/merkle"
@@ -12,6 +13,7 @@ import (
 )
 
 func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer) error {
+	log.Printf("Received call: UploadFiles")
 	serverNonce, err := cr.Random12BytesNonce()
 	if err != nil {
 		return err
