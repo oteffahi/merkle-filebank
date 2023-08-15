@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"errors"
 	"io"
 
@@ -39,7 +40,7 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 	}
 
 	// verify nonce matches
-	if !cr.ValidateNonce(signedResp.Nonce, serverNonce) {
+	if !bytes.Equal(signedResp.Nonce, serverNonce) {
 		return errors.New("Invalid challenge response nonce")
 	}
 	// TODO: verify signature

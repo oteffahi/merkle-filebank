@@ -12,15 +12,3 @@ func Random12BytesNonce() ([]byte, error) {
 	}
 	return nonce, nil
 }
-
-func ValidateNonce(received []byte, sent []byte) bool {
-	if len(received) != len(sent) {
-		return false
-	}
-	for i := 0; i < len(received); i++ {
-		if received[i] != sent[i] {
-			return false
-		}
-	}
-	return true
-}

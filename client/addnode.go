@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"time"
@@ -30,7 +31,7 @@ func CallAddNode(endpoint string) error {
 		return err
 	}
 
-	if !cr.ValidateNonce(resp.Nonce, nonce) {
+	if !bytes.Equal(resp.Nonce, nonce) {
 		return errors.New("Invalid response message: bad nonce")
 	}
 	// TODO: verify signature
