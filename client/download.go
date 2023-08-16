@@ -3,16 +3,45 @@ package client
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/oteffahi/merkle-filebank/merkle"
 	pb "github.com/oteffahi/merkle-filebank/proto"
+	"github.com/oteffahi/merkle-filebank/storage"
 	"google.golang.org/protobuf/proto"
 )
 
-func CallDownloadFiles(endpoint string, fileNumber int) error {
-	conn, client, err := connectToNode(endpoint)
+func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) error {
+	// verify that server exists locally
+	if serverExists, err := storage.Client_ServerExists(bankhome, serverName); err != nil {
+		return err
+	} else if !serverExists {
+		return errors.New(fmt.Sprintf("Server %v does not exist locally", serverName))
+	}
+	server, err := storage.Client_ReadServerDescriptor(bankhome, serverName)
+	if err != nil {
+		return err
+	}
+
+	// verify that bank exists
+	if bankExist, err := storage.Client_BankExists(bankhome, serverName, bankName); err != nil {
+		return err
+	} else if !bankExist {
+		return errors.New(fmt.Sprintf("Bank %v:%v does not exist", serverName, bankName))
+	}
+	bank, err := storage.Client_ReadBankDescriptor(bankhome, serverName, bankName)
+	if err != nil {
+		return err
+	}
+
+	// verify fileNumber exists in bank
+	if fileNumber < int(bank.Nbfiles) || fileNumber > int(bank.Nbfiles) {
+		return errors.New(fmt.Sprintf("No file identified by %v. Bank %v:%v has files between 1-%v", fileNumber, serverName, bankName, bank.Nbfiles))
+	}
+
+	conn, client, err := connectToNode(server.Host)
 	if err != nil {
 		return err
 	}
@@ -89,19 +118,15 @@ func CallDownloadFiles(endpoint string, fileNumber int) error {
 		serverProof = append(serverProof, buff)
 	}
 
-	// TODO: load merkleRoot
-	var merkleRoot [32]byte
-	copy(merkleRoot[:], []byte("ROOT"))
-
 	// verify proof
 	merkleProof := merkle.MerkleProof{
 		Hashes: serverProof,
 	}
-	validProof, err := merkleProof.VerifyFileProof(fileAndProof.File, merkleRoot)
+	validProof, err := merkleProof.VerifyFileProof(fileAndProof.File, [32]byte(bank.MerkleRoot))
 	if err != nil {
 		return err
 	}
-	if validProof { //TODO: flip boolean when verification is implemented
+	if !validProof { //TODO: flip boolean when verification is implemented
 		return errors.New("Invalid merkle proof")
 	}
 
