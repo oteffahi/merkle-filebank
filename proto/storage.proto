@@ -16,16 +16,17 @@ message ServerBankDescriptor {
 }
 
 message ClientBankDescriptor {
-  bytes priv_key = 4;
-  int32 nbfiles = 5;
-  bytes merkle_root = 6;
-  repeated FileDescriptor file_descriptors = 7;
+  bytes priv_key = 5;
+  int32 nbfiles = 6;
+  bytes merkle_root = 7;
+  repeated FileDescriptor file_descriptors = 8;
 }
 
 message FileDescriptor {
   int32 seq = 1;
-  bytes salt = 2;
-  bytes iv = 3;
+  string name = 2;
+  bytes salt = 3;
+  bytes iv = 4;
 }
 
 message ServerDescriptor {
