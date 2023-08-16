@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	pb "github.com/oteffahi/merkle-filebank/proto"
@@ -129,6 +130,36 @@ func Client_ReadServerDescriptor(bankhome string, serverName string) (*pb.Server
 		return nil, errors.New(fmt.Sprintf("Server descriptor for %s is malformed", serverName))
 	}
 	return descriptor, nil
+}
+
+func Client_ListServers(bankhome string) (serverNames []string, serverHosts []string, err error) {
+	dscriptors, err := os.ReadDir(bankhome + "/client")
+	if err != nil {
+		return nil, nil, err
+	}
+	for _, descriptor := range dscriptors {
+		fileName := descriptor.Name()
+		if strings.HasPrefix(fileName, "srv_") {
+			serverName, _ := strings.CutPrefix(fileName, "srv_")
+			// read descriptor
+			descBytes, err := os.ReadFile(bankhome + "/" + fileName + "/" + "server.desc")
+			if err != nil {
+				return nil, nil, err
+			}
+			// deserialize
+			var deserialized proto.Message
+			if err := proto.Unmarshal(descBytes, deserialized); err != nil {
+				return nil, nil, err
+			}
+			descriptor, ok := deserialized.(*pb.ServerDescriptor)
+			if !ok {
+				return nil, nil, errors.New(fmt.Sprintf("Server descriptor for %s is malformed", serverName))
+			}
+			serverNames = append(serverNames, descriptor.Host)
+			serverNames = append(serverNames, serverName)
+		}
+	}
+	return serverNames, serverHosts, nil
 }
 
 func GetAllFilesPaths(rootPath string) ([]string, error) {

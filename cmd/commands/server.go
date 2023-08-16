@@ -5,6 +5,7 @@ import (
 
 	"github.com/oteffahi/merkle-filebank/client"
 	"github.com/oteffahi/merkle-filebank/server"
+	"github.com/oteffahi/merkle-filebank/storage"
 	"github.com/spf13/cobra"
 )
 
@@ -108,10 +109,51 @@ Args:
 	},
 }
 
+var listServersCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List local servers",
+	Long:  `List local servers that have been saved using the "add" command.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) > 0 {
+			fmt.Printf("Unexpected positional arguments\n\n")
+			cmd.Help()
+			return
+		}
+
+		homepath, err := getHomePath(cmd)
+		if err != nil {
+			fmt.Println(err)
+			cmd.Help()
+			return
+		}
+
+		// read storage
+		ok, err := storage.IsHomeWellFormed(homepath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		} else if !ok {
+			fmt.Printf("Home %v is does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
+			return
+		}
+		servers, serverHosts, err := storage.Client_ListServers(homepath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Printf("\tServer\t\tHost\n")
+		fmt.Printf("=======================================\n")
+		for i := 0; i < len(servers); i++ {
+			fmt.Printf("\t%v\t\t%v\n", servers[i], serverHosts[i])
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(serverCmd)
 	rootCmd.AddCommand(startCmd)
 	serverCmd.AddCommand(addServerCmd)
+	serverCmd.AddCommand(listServersCmd)
 
 	addServerCmd.Flags().StringP("address", "a", "", "hostname or IP address of server")
 	addServerCmd.Flags().Int16P("port", "p", 5500, "TCP Port number on which the MerkleFileBank service is running")
