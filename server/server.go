@@ -8,15 +8,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	endpoint = "0.0.0.0:5500"
-)
-
 type fileBankServer struct {
 	pb.FileBankServiceServer
 }
 
-func RunServer() {
+func RunServer(endpoint string) {
 	conn, err := net.Listen("tcp", endpoint)
 
 	if err != nil {
