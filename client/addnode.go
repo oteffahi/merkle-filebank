@@ -10,7 +10,7 @@ import (
 	pb "github.com/oteffahi/merkle-filebank/proto"
 )
 
-func CallAddNode(endpoint string) error {
+func CallAddNode(endpoint string, serverName string) error {
 	nonce, err := cr.Random12BytesNonce()
 	if err != nil {
 		return err
