@@ -4,29 +4,48 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
 	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	"github.com/oteffahi/merkle-filebank/merkle"
 	pb "github.com/oteffahi/merkle-filebank/proto"
+	"github.com/oteffahi/merkle-filebank/storage"
 	"google.golang.org/protobuf/proto"
 )
 
-func CallUploadFiles(endpoint string, files [][]byte) error {
+func CallUploadFiles(bankhome, serverName, bankName string, files [][]byte) error {
 	if len(files) == 0 {
 		return errors.New("Files list is empty")
 	}
 
+	// verify that server exists locally
+	if serverExists, err := storage.Client_ServerExists(bankhome, serverName); err != nil {
+		return err
+	} else if !serverExists {
+		return errors.New(fmt.Sprintf("Server %v does not exist locally", serverName))
+	}
+
+	server, err := storage.Client_ReadServerDescriptor(bankhome, serverName)
+	if err != nil {
+		return err
+	}
+	// verify that bank does not exist
+	if bankExist, err := storage.Client_BankExists(bankhome, serverName, bankName); err != nil {
+		return err
+	} else if bankExist {
+		return errors.New(fmt.Sprintf("Bank %v:%v already exists", serverName, bankName))
+	}
+
 	// generate merkle tree for files
 	var tree merkle.MerkleTree
-	err := tree.BuildMerkeTree(files)
-	if err != nil {
+	if err = tree.BuildMerkeTree(files); err != nil {
 		return err
 	}
 	merkleRoot := tree.GetMerkleRoot()
 
-	conn, client, err := connectToNode(endpoint)
+	conn, client, err := connectToNode(server.Host)
 	if err != nil {
 		return err
 	}
