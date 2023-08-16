@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/oteffahi/merkle-filebank/client"
 	"github.com/oteffahi/merkle-filebank/storage"
@@ -75,17 +74,7 @@ Args:
 			paths = append(paths, content...)
 		}
 
-		var files [][]byte
-		for _, path := range paths {
-			content, err := os.ReadFile(path)
-			if err != nil {
-				fmt.Printf("Error while processing file %v:\n%v\n\n", path, err)
-				return
-			}
-			files = append(files, content)
-		}
-
-		if err := client.CallUploadFiles(homepath, serverName, bankName, files); err != nil {
+		if err := client.CallUploadFiles(homepath, serverName, bankName, paths); err != nil {
 			fmt.Println(err)
 			return
 		}

@@ -124,3 +124,19 @@ func GetAllFilesPaths(rootPath string) ([]string, error) {
 		return []string{rootPath}, nil
 	}
 }
+
+func ReadFilesFromPaths(paths []string) (names []string, files [][]byte, err error) {
+	for _, path := range paths {
+		file, err := os.Stat(path)
+		if err != nil {
+			return nil, nil, err
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return nil, nil, err
+		}
+		files = append(files, content)
+		names = append(names, file.Name())
+	}
+	return names, files, nil
+}

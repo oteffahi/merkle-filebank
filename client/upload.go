@@ -15,8 +15,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func CallUploadFiles(bankhome, serverName, bankName string, files [][]byte) error {
-	if len(files) == 0 {
+func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) error {
+	if len(filepaths) == 0 {
 		return errors.New("Files list is empty")
 	}
 
@@ -36,6 +36,12 @@ func CallUploadFiles(bankhome, serverName, bankName string, files [][]byte) erro
 		return err
 	} else if bankExist {
 		return errors.New(fmt.Sprintf("Bank %v:%v already exists", serverName, bankName))
+	}
+
+	// read files
+	_, files, err := storage.ReadFilesFromPaths(filepaths)
+	if err != nil {
+		return err
 	}
 
 	// generate merkle tree for files
@@ -82,7 +88,7 @@ func CallUploadFiles(bankhome, serverName, bankName string, files [][]byte) erro
 			SignedResp: &pb.ChallengeResponse{
 				Nonce:     serverNonce,
 				Pubkey:    pubkey,
-				Nbfiles:   int32(len(files)),
+				Nbfiles:   int32(len(filepaths)),
 				Signature: sign,
 			},
 		},
