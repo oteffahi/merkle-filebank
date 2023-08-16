@@ -16,7 +16,8 @@ func TestEncryptDecrypt(t *testing.T) {
 		return
 	}
 
-	decryptedData, err := DecryptData(encryptedData, passphrase, salt, iv)
+	key := DeriveKey(passphrase, salt)
+	decryptedData, err := DecryptData(encryptedData, key, iv)
 	if err != nil {
 		t.Errorf("Error occured during decryption: %v", err)
 		return

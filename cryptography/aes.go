@@ -20,7 +20,7 @@ func EncryptData(data []byte, passphrase []byte) (ct, salt, iv []byte, err error
 	}
 
 	// derive key from passphrase
-	derivedKey := pbkdf2.Key(passphrase, salt, 4096, 16, sha1.New)
+	derivedKey := DeriveKey(passphrase, salt)
 
 	// create instance of cipher
 	blockCipher, err := aes.NewCipher(derivedKey)
@@ -38,12 +38,9 @@ func EncryptData(data []byte, passphrase []byte) (ct, salt, iv []byte, err error
 	return ct, salt, iv, nil
 }
 
-func DecryptData(data, passphrase, salt, iv []byte) ([]byte, error) {
-	// derive key from passphrase
-	derivedKey := pbkdf2.Key(passphrase, salt, 4096, 16, sha1.New)
-
+func DecryptData(data, aeskey, iv []byte) ([]byte, error) {
 	// create instance of cipher
-	blockCipher, err := aes.NewCipher(derivedKey)
+	blockCipher, err := aes.NewCipher(aeskey)
 	if err != nil {
 		return nil, err
 	}
@@ -59,4 +56,9 @@ func DecryptData(data, passphrase, salt, iv []byte) ([]byte, error) {
 	}
 
 	return plaintext, nil
+}
+
+func DeriveKey(passphrase, salt []byte) []byte {
+	// derive key from passphrase with salt
+	return pbkdf2.Key(passphrase, salt, 4096, 16, sha1.New)
 }
