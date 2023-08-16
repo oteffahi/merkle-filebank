@@ -11,12 +11,49 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+func IsHomeWellFormed(bankhome string) (bool, error) {
+	// root
+	if _, err := os.Stat(bankhome); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	// server
+	if _, err := os.Stat(bankhome + "/server"); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	// client
+	if _, err := os.Stat(bankhome + "/client"); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	// downloads
+	if _, err := os.Stat(bankhome + "/downloads"); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func Server_ReadServerKey(bankhome string) ([]byte, error) {
 	key, err := os.ReadFile(bankhome + "/server/priv.key")
 	if err != nil {
 		return nil, err
 	}
 	return key, nil
+}
+
+func Server_ServerKeyExists(bankhome string) (bool, error) {
+	if _, err := os.Stat(bankhome + "/server/priv.key"); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func Server_ReadBankDescriptor(bankhome string, clientPubKey ed25519.PublicKey) (*pb.ServerBankDescriptor, error) {

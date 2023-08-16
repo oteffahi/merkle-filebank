@@ -21,6 +21,8 @@ func InitHome(bankhome string) error {
 		if err := os.MkdirAll(bankhome+"/downloads", os.ModeDir); err != nil {
 			return err
 		}
+	} else if err != nil {
+		return err
 	}
 	return nil
 }
