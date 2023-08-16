@@ -31,3 +31,11 @@ func init() {
 	}
 	rootCmd.PersistentFlags().String("home", userHome+"/.filebankd", "root directory for MerkleFileBank storage")
 }
+
+func getHomePath(cmd *cobra.Command) (string, error) {
+	homepath, err := cmd.Flags().GetString("home")
+	if err != nil {
+		return "", err
+	}
+	return homepath, nil
+}

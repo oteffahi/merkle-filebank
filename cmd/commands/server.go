@@ -42,7 +42,7 @@ var startCmd = &cobra.Command{
 			return
 		}
 
-		homepath, err := cmd.Flags().GetString("home")
+		homepath, err := getHomePath(cmd)
 		if err != nil {
 			fmt.Println(err)
 			cmd.Help()
@@ -95,7 +95,13 @@ Args:
 		}
 		serverName := args[0]
 
-		if err := addServer(serverName, addr, port); err != nil {
+		homepath, err := getHomePath(cmd)
+		if err != nil {
+			fmt.Println(err)
+			cmd.Help()
+			return
+		}
+		if err := addServer(homepath, serverName, addr, port); err != nil {
 			fmt.Println(err)
 			return
 		}
@@ -114,9 +120,9 @@ func init() {
 	startCmd.Flags().Int16P("port", "p", 5500, "TCP Port number on which the MerkleFileBank service will run")
 }
 
-func addServer(serverName string, host string, port int16) error {
+func addServer(homepath, serverName string, host string, port int16) error {
 	hostName := fmt.Sprintf("%s:%d", host, port)
-	if err := client.CallAddNode(hostName, serverName); err != nil {
+	if err := client.CallAddNode(hostName, homepath, serverName); err != nil {
 		return err
 	}
 	return nil
