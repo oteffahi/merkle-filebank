@@ -142,21 +142,17 @@ func Client_ListServers(bankhome string) (serverNames []string, serverHosts []st
 		if strings.HasPrefix(fileName, "srv_") {
 			serverName, _ := strings.CutPrefix(fileName, "srv_")
 			// read descriptor
-			descBytes, err := os.ReadFile(bankhome + "/" + fileName + "/" + "server.desc")
+			descBytes, err := os.ReadFile(bankhome + "/client/" + fileName + "/" + "server.desc")
 			if err != nil {
 				return nil, nil, err
 			}
 			// deserialize
-			var deserialized proto.Message
-			if err := proto.Unmarshal(descBytes, deserialized); err != nil {
+			descriptor := &pb.ServerDescriptor{}
+			if err := proto.Unmarshal(descBytes, descriptor); err != nil {
 				return nil, nil, err
 			}
-			descriptor, ok := deserialized.(*pb.ServerDescriptor)
-			if !ok {
-				return nil, nil, errors.New(fmt.Sprintf("Server descriptor for %s is malformed", serverName))
-			}
-			serverNames = append(serverNames, descriptor.Host)
 			serverNames = append(serverNames, serverName)
+			serverHosts = append(serverHosts, descriptor.Host)
 		}
 	}
 	return serverNames, serverHosts, nil
