@@ -2,15 +2,16 @@ package client
 
 import (
 	"context"
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"io"
 	"time"
 
+	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	"github.com/oteffahi/merkle-filebank/merkle"
 	pb "github.com/oteffahi/merkle-filebank/proto"
 	"github.com/oteffahi/merkle-filebank/storage"
-	"google.golang.org/protobuf/proto"
 )
 
 func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) error {
@@ -37,9 +38,35 @@ func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) er
 	}
 
 	// verify fileNumber exists in bank
-	if fileNumber < int(bank.Nbfiles) || fileNumber > int(bank.Nbfiles) {
+	if fileNumber < 1 || fileNumber > int(bank.Nbfiles) {
 		return errors.New(fmt.Sprintf("No file identified by %v. Bank %v:%v has files between 1-%v", fileNumber, serverName, bankName, bank.Nbfiles))
 	}
+
+	// import bank private key
+	fmt.Printf("Enter bank password: ")
+	passphrase, err := cr.ReadPassphrase()
+	fmt.Println()
+	if err != nil {
+		return err
+	}
+	bankPrivKey, err := cr.SafeImportPrivateKey(bank.PrivKey, []byte(passphrase))
+	if err != nil {
+		return fmt.Errorf("Error occured while decrypting bank key: %v\n", err)
+	}
+	// get publicKey from privateKey
+	bankPubKey, _ := bankPrivKey.Public().(ed25519.PublicKey) // loading private key would have generated an error for this to fail
+	// export, hash and base58 public key
+	exportedPubKey, err := cr.ExportPublicKey(bankPubKey)
+	if err != nil {
+		return err
+	}
+	keyHash := cr.HashOnce(exportedPubKey)
+	bankPubKeyHashB58 := cr.Base58Encode(keyHash[:])
+
+	// derive decryption key from passphrase
+	fileDescriptor := bank.FileDescriptors[fileNumber-1]
+	aeskey := cr.DeriveKey([]byte(passphrase), fileDescriptor.Salt)
+	passphrase = "" // passphrase will hopefully be garbage-collected
 
 	conn, client, err := connectToNode(server.Host)
 	if err != nil {
@@ -72,21 +99,23 @@ func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) er
 		return errors.New("Invalid message type")
 	}
 
-	// TODO: get pubkey
-	pubkey := []byte("key")
-
-	// TODO: sign nonce
-	sign, err := proto.Marshal(resp1)
+	// sign request
+	msgToSign := &pb.SignDownloadRequestClient{
+		Nonce:      serverNonce,
+		PubKeyAddr: bankPubKeyHashB58,
+		FileNum:    int32(fileNumber),
+	}
+	sign, err := cr.SignMessage(msgToSign, bankPrivKey)
 	if err != nil {
 		return err
 	}
 
 	// generate and send request message
 	if err := stream.Send(&pb.DownloadFilesRequest{
-		Nonce:     serverNonce,
-		Pubkey:    pubkey,
-		FileNum:   int32(fileNumber),
-		Signature: sign,
+		Nonce:      serverNonce,
+		PubKeyAddr: bankPubKeyHashB58,
+		FileNum:    int32(fileNumber),
+		Signature:  sign,
 	}); err != nil {
 		return err
 	}
@@ -126,11 +155,18 @@ func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) er
 	if err != nil {
 		return err
 	}
-	if !validProof { //TODO: flip boolean when verification is implemented
+	if !validProof {
 		return errors.New("Invalid merkle proof")
 	}
 
-	// TODO: write file to disk
+	// decrypt file
+	decryptedFile, err := cr.DecryptData(fileAndProof.File, aeskey, fileDescriptor.Iv)
+	if err != nil {
+		return err
+	}
 
+	if err := storage.Client_WriteDownloadedFile(bankhome, fileDescriptor.Name, decryptedFile); err != nil {
+		return err
+	}
 	return nil
 }

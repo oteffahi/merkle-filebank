@@ -111,3 +111,12 @@ func Client_WriteServerDescriptor(bankhome string, descriptor *pb.ServerDescript
 	}
 	return nil
 }
+
+func Client_WriteDownloadedFile(bankhome string, filename string, file []byte) error {
+	filepath := bankhome + "/downloads/" + filename
+	if err := os.WriteFile(filepath, file, 0644); err != nil {
+		return err
+	}
+	fmt.Println("File written to " + filepath)
+	return nil
+}

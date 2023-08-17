@@ -24,3 +24,9 @@ message SignMerkleRootServer {
   bytes nonce = 1;
   bytes merkle_root = 2;
 }
+
+message SignDownloadRequestClient {
+  bytes nonce = 1;
+  string pub_key_addr = 2;
+  int32 file_num = 3;
+}

@@ -81,6 +81,18 @@ func Server_ReadBankDescriptor(bankhome string, pubKeyHashB58 string) (*pb.Serve
 	return descriptor, nil
 }
 
+func Server_ReadFileFromBank(bankhome string, pubKeyHashB58 string, fileNum int) ([]byte, error) {
+	// clientPubKey is assumed hashed and b58encoded in exported format
+	dirName := pubKeyHashB58
+
+	file, err := os.ReadFile(fmt.Sprintf("%s/server/%s/%d", bankhome, dirName, fileNum))
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
 func Client_BankExists(bankhome string, serverName string, bankName string) (bool, error) {
 	if _, err := os.Stat(fmt.Sprintf("%s/client/srv_%s/bnk_%s.desc", bankhome, serverName, bankName)); os.IsNotExist(err) {
 		return false, nil

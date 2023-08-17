@@ -59,7 +59,7 @@ message MerkleRoot {
 
 message DownloadFilesRequest {
   bytes nonce = 1;
-  bytes pubkey = 2;
+  string pub_key_addr = 2;
   int32 file_num = 3;
   bytes signature = 4;
 }
