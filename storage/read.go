@@ -2,7 +2,6 @@ package storage
 
 import (
 	"crypto/ed25519"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -68,15 +67,11 @@ func Server_ReadBankDescriptor(bankhome string, clientPubKey ed25519.PublicKey) 
 		return nil, err
 	}
 
-	var deserialized proto.Message
-	if err := proto.Unmarshal(desc, deserialized); err != nil {
+	descriptor := &pb.ServerBankDescriptor{}
+	if err := proto.Unmarshal(desc, descriptor); err != nil {
 		return nil, err
 	}
 
-	descriptor, ok := deserialized.(*pb.ServerBankDescriptor)
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("Bank descriptor for %v is malformed", dirName))
-	}
 	return descriptor, nil
 }
 
@@ -103,15 +98,11 @@ func Client_ReadBankDescriptor(bankhome string, serverName string, bankName stri
 	if err != nil {
 		return nil, err
 	}
-	var deserialized proto.Message
-	if err := proto.Unmarshal(desc, deserialized); err != nil {
+	descriptor := &pb.ClientBankDescriptor{}
+	if err := proto.Unmarshal(desc, descriptor); err != nil {
 		return nil, err
 	}
 
-	descriptor, ok := deserialized.(*pb.ClientBankDescriptor)
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("Bank descriptor for %s:%s is malformed", serverName, bankName))
-	}
 	return descriptor, nil
 }
 
@@ -120,15 +111,12 @@ func Client_ReadServerDescriptor(bankhome string, serverName string) (*pb.Server
 	if err != nil {
 		return nil, err
 	}
-	var deserialized proto.Message
-	if err := proto.Unmarshal(desc, deserialized); err != nil {
+
+	descriptor := &pb.ServerDescriptor{}
+	if err := proto.Unmarshal(desc, descriptor); err != nil {
 		return nil, err
 	}
 
-	descriptor, ok := deserialized.(*pb.ServerDescriptor)
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("Server descriptor for %s is malformed", serverName))
-	}
 	return descriptor, nil
 }
 
