@@ -168,5 +168,6 @@ func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) er
 	if err := storage.Client_WriteDownloadedFile(bankhome, fileDescriptor.Name, decryptedFile); err != nil {
 		return err
 	}
+	fmt.Printf("Successfully downloaded, verified and decrypted file %d from bank %s:%s\n", fileNumber, serverName, bankName)
 	return nil
 }

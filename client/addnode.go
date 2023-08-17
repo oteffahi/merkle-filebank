@@ -63,6 +63,7 @@ func CallAddNode(endpoint string, bankhome string, serverName string) error {
 	if err := storage.Client_WriteServerDescriptor(bankhome, serverDescriptor, serverName); err != nil {
 		return err
 	}
+	fmt.Printf("Server '%s' was successfully added to known servers\n", serverName)
 	return nil
 }
 

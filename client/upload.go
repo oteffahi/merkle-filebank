@@ -212,7 +212,7 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 	if err := storage.Client_WriteBankDescriptor(bankhome, bankDescriptor, serverName, bankName); err != nil {
 		return err // TODO: maybe try to store somewhere else to save the filebank
 	}
-
+	fmt.Printf("Bank %s:%s has been succesfully created and uploaded\n", serverName, bankName)
 	return nil
 }
 
