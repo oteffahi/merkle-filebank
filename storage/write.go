@@ -11,19 +11,10 @@ import (
 )
 
 func InitHome(bankhome string) error {
-	if _, err := os.Stat(bankhome); os.IsNotExist(err) {
-		if err := os.MkdirAll(bankhome+"/server", os.ModeDir); err != nil {
-			return err
-		}
-		if err := os.MkdirAll(bankhome+"/client", os.ModeDir); err != nil {
-			return err
-		}
-		if err := os.MkdirAll(bankhome+"/downloads", os.ModeDir); err != nil {
-			return err
-		}
-	} else if err != nil {
-		return err
-	}
+	os.MkdirAll(bankhome+"/server", os.ModeDir)
+	os.MkdirAll(bankhome+"/client", os.ModeDir)
+	os.MkdirAll(bankhome+"/downloads", os.ModeDir)
+	os.MkdirAll(bankhome+"/cert", os.ModeDir)
 	return nil
 }
 

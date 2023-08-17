@@ -26,7 +26,7 @@ func CallAddNode(endpoint string, bankhome string, serverName string) error {
 		return err
 	}
 
-	conn, client, err := connectToNode(endpoint)
+	conn, client, err := connectToNode(endpoint, bankhome)
 	if err != nil {
 		return err
 	}

@@ -34,6 +34,12 @@ func IsHomeWellFormed(bankhome string) (bool, error) {
 	} else if err != nil {
 		return false, err
 	}
+	// cert
+	if _, err := os.Stat(bankhome + "/cert"); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
 	return true, nil
 }
 

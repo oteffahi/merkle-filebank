@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/ed25519"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -10,6 +11,7 @@ import (
 	pb "github.com/oteffahi/merkle-filebank/proto"
 	"github.com/oteffahi/merkle-filebank/storage"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type fileBankServer struct {
@@ -62,7 +64,23 @@ func RunServer(endpoint string) {
 		handleError(err)
 	}
 
-	server := grpc.NewServer()
+	var server *grpc.Server
+	// try to load cert
+	serverCert, err := tls.LoadX509KeyPair(bankhome+"/cert/filebank-server-cert.pem", bankhome+"/cert/filebank-server-key.pem")
+	if err != nil {
+		fmt.Println("Could not load certificate and key. Starting without TLS...")
+		server = grpc.NewServer()
+	} else {
+		fmt.Println("Starting server with TLS enabled...")
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{serverCert},
+			ClientAuth:   tls.NoClientCert,
+		}
+		server = grpc.NewServer(
+			grpc.Creds(credentials.NewTLS(tlsConfig)),
+		)
+	}
+
 	pb.RegisterFileBankServiceServer(server, &fileBankServer{})
 
 	log.Printf("Server listening on %v", conn.Addr())

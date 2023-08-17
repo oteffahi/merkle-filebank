@@ -92,7 +92,7 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 	}
 	merkleRoot := tree.GetMerkleRoot()
 
-	conn, client, err := connectToNode(server.Host)
+	conn, client, err := connectToNode(server.Host, bankName)
 	if err != nil {
 		return err
 	}

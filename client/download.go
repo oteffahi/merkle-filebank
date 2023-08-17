@@ -68,7 +68,7 @@ func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) er
 	aeskey := cr.DeriveKey([]byte(passphrase), fileDescriptor.Salt)
 	passphrase = "" // passphrase will hopefully be garbage-collected
 
-	conn, client, err := connectToNode(server.Host)
+	conn, client, err := connectToNode(server.Host, bankName)
 	if err != nil {
 		return err
 	}
