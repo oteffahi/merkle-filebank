@@ -2,6 +2,7 @@ package cryptography
 
 import (
 	"crypto/rand"
+	"errors"
 	"io"
 	"syscall"
 
@@ -36,5 +37,8 @@ func ReadPassphrase() (string, error) {
 		return "", err
 	}
 
+	if len(bytePassword) < 6 {
+		return "", errors.New("Length must be at least 6 characters")
+	}
 	return string(bytePassword), nil
 }
