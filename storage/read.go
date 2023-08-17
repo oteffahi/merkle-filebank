@@ -1,12 +1,10 @@
 package storage
 
 import (
-	"crypto/ed25519"
 	"fmt"
 	"os"
 	"strings"
 
-	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	pb "github.com/oteffahi/merkle-filebank/proto"
 	"google.golang.org/protobuf/proto"
 )
@@ -56,12 +54,20 @@ func Server_ServerKeyExists(bankhome string) (bool, error) {
 	return true, nil
 }
 
-func Server_ReadBankDescriptor(bankhome string, clientPubKey ed25519.PublicKey) (*pb.ServerBankDescriptor, error) {
-	keyHash := cr.HashOnce(clientPubKey)
-	dirName, err := cr.Base58Encode(keyHash[:])
-	if err != nil {
-		return nil, err
+func Server_BankExists(bankhome string, pubKeyHashB58 string) (bool, error) {
+	// clientPubKey is assumed hashed and b58encoded in exported format
+	dirName := pubKeyHashB58
+	if _, err := os.Stat(bankhome + "/server/" + dirName); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, err
 	}
+	return true, nil
+}
+
+func Server_ReadBankDescriptor(bankhome string, pubKeyHashB58 string) (*pb.ServerBankDescriptor, error) {
+	// clientPubKey is assumed hashed and b58encoded in exported format
+	dirName := pubKeyHashB58
 	desc, err := os.ReadFile(bankhome + "/server/" + dirName + "/bank.desc")
 	if err != nil {
 		return nil, err

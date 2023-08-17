@@ -38,10 +38,7 @@ func Server_WriteServerKey(bankhome string, key []byte) error {
 func Server_WriteBankDescriptor(bankhome string, descriptor *pb.ServerBankDescriptor) error {
 	pubKey := descriptor.PubKey
 	keyHash := cr.HashOnce(pubKey)
-	dirName, err := cr.Base58Encode(keyHash[:])
-	if err != nil {
-		return err
-	}
+	dirName := cr.Base58Encode(keyHash[:])
 
 	if _, err := os.Stat(bankhome + "/server/" + dirName); !os.IsNotExist(err) {
 		return errors.New("Client key already has bank")
@@ -61,6 +58,16 @@ func Server_WriteBankDescriptor(bankhome string, descriptor *pb.ServerBankDescri
 	return nil
 }
 
+func Server_WriteFileToBank(bankhome string, clientPubKey []byte, file []byte, fileNum int) error {
+	keyHash := cr.HashOnce(clientPubKey)
+	dirName := cr.Base58Encode(keyHash[:])
+
+	if err := os.WriteFile(fmt.Sprintf("%s/server/%s/%d", bankhome, dirName, fileNum), file, 0444); err != nil {
+		return err
+	}
+	return nil
+}
+
 func Client_WriteBankDescriptor(bankhome string, descriptor *pb.ClientBankDescriptor, serverName string, bankName string) error {
 	serverPath := fmt.Sprintf("%s/client/srv_%s", bankhome, serverName)
 	bankPath := fmt.Sprintf("%s/bnk_%s.desc", serverPath, bankName)
@@ -69,7 +76,7 @@ func Client_WriteBankDescriptor(bankhome string, descriptor *pb.ClientBankDescri
 		return errors.New("Server " + serverName + " does not exist")
 	}
 	// bank must not exist
-	if _, err := os.Stat(serverPath); !os.IsNotExist(err) {
+	if _, err := os.Stat(bankPath); !os.IsNotExist(err) {
 		return errors.New(fmt.Sprintf("Bank %s:%s already exists", serverName, bankName))
 	}
 

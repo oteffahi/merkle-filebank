@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"errors"
 	"io"
 	"log"
@@ -9,7 +10,7 @@ import (
 	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	"github.com/oteffahi/merkle-filebank/merkle"
 	pb "github.com/oteffahi/merkle-filebank/proto"
-	"google.golang.org/protobuf/proto"
+	"github.com/oteffahi/merkle-filebank/storage"
 )
 
 func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer) error {
@@ -47,21 +48,21 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 	if !bytes.Equal(signedResp.Nonce, serverNonce) {
 		return errors.New("Invalid challenge response nonce")
 	}
-	// TODO: verify signature
-	validSignature, err := verifySignature(signedResp)
+	// import pubKey
+	clientPubKey, err := cr.ImportPublicKey(signedResp.Pubkey)
 	if err != nil {
 		return err
 	}
-	if !validSignature {
-		return errors.New("Invalid challenge signature")
-	}
-	// TODO: verify key existence
-	exists, err := verifyKeyExistence(signedResp.Pubkey)
-	if err != nil {
+
+	if err := verifyUploadChallengeResponseSignature(signedResp, clientPubKey); err != nil {
 		return err
 	}
-	if exists {
-		return errors.New("Key already has a bank")
+
+	// check bank existence
+	if exists, err := verifyBankExistence(signedResp.Pubkey); err != nil {
+		return err
+	} else if exists {
+		return errors.New("Bank already exists")
 	}
 
 	// read files
@@ -115,10 +116,34 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 		return errors.New("Invalid message type")
 	}
 
-	// TODO: write everything to disk
+	// convert tree.Hashes from slice of arrays to slice of slices
+	merkleHashes := [][]byte{}
+	for _, hash := range tree.Hashes {
+		merkleHashes = append(merkleHashes, hash[:])
+	}
+	// write bank descriptor
+	bankDescriptor := &pb.ServerBankDescriptor{
+		PubKey:       signedResp.Pubkey,
+		Nbfiles:      signedResp.Nbfiles,
+		MerkleHashes: merkleHashes,
+	}
+	if err := storage.Server_WriteBankDescriptor(bankhome, bankDescriptor); err != nil {
+		return err
+	}
 
-	// TODO: sign response
-	sign, err := proto.Marshal(req3)
+	// write files
+	for i := 0; i < len(files); i++ {
+		if err := storage.Server_WriteFileToBank(bankhome, signedResp.Pubkey, files[i], i+1); err != nil {
+			return err
+		}
+	}
+
+	// files stored correctly. Sign response
+	msgToSign := &pb.SignMerkleRootServer{
+		Nonce:      clientNonce,
+		MerkleRoot: merkleRoot[:],
+	}
+	sign, err := cr.SignMessage(msgToSign, ServerKeys.privKey)
 	if err != nil {
 		return err
 	}
@@ -140,12 +165,24 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 	return nil
 }
 
-func verifySignature(m *pb.ChallengeResponse) (bool, error) {
-	return true, nil // TODO
+func verifyUploadChallengeResponseSignature(resp *pb.ChallengeResponse, pubKey ed25519.PublicKey) error {
+	clientSignedMsg := &pb.SignUploadRequestClient{
+		Nonce:   resp.Nonce,
+		PubKey:  resp.Pubkey,
+		Nbfiles: resp.Nbfiles,
+	}
+	return cr.VerifySignature(clientSignedMsg, pubKey, resp.Signature)
 }
 
-func verifyKeyExistence(key []byte) (bool, error) {
-	return false, nil // TODO
+func verifyBankExistence(clientPubKey []byte) (bool, error) {
+	keyHash := cr.HashOnce(clientPubKey)
+	keyHashB58 := cr.Base58Encode(keyHash[:])
+	if exists, err := storage.Server_BankExists(bankhome, keyHashB58); err != nil {
+		return false, err
+	} else if exists {
+		return true, nil
+	}
+	return false, nil
 }
 
 func generateMerkleTreeForFiles(files [][]byte) (*merkle.MerkleTree, error) {

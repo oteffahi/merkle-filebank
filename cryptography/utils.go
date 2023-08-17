@@ -5,7 +5,7 @@ import (
 	"io"
 	"syscall"
 
-	"github.com/itchyny/base58-go"
+	"github.com/akamensky/base58"
 	"golang.org/x/term"
 )
 
@@ -21,17 +21,13 @@ func randomBytes(length int) ([]byte, error) {
 	return nonce, nil
 }
 
-func Base58Encode(data []byte) (string, error) {
-	encoded, err := base58.BitcoinEncoding.Encode(data)
-	if err != nil {
-		return "", err
-	}
-	return string(encoded), nil
+func Base58Encode(data []byte) string {
+	encoded := base58.Encode(data)
+	return string(encoded)
 }
 
 func Base58Decode(data string) ([]byte, error) {
-	encoded := []byte(data)
-	return base58.BitcoinEncoding.Decode(encoded)
+	return base58.Decode(data)
 }
 
 func ReadPassphrase() (string, error) {

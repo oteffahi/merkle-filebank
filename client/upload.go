@@ -3,16 +3,17 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	"github.com/oteffahi/merkle-filebank/merkle"
 	pb "github.com/oteffahi/merkle-filebank/proto"
 	"github.com/oteffahi/merkle-filebank/storage"
-	"google.golang.org/protobuf/proto"
 )
 
 func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) error {
@@ -31,6 +32,12 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 	if err != nil {
 		return err
 	}
+	// import server pubkey
+	serverPubKey, err := cr.ImportPublicKey(server.PubKey)
+	if err != nil {
+		return err
+	}
+
 	// verify that bank does not exist
 	if bankExist, err := storage.Client_BankExists(bankhome, serverName, bankName); err != nil {
 		return err
@@ -39,14 +46,48 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 	}
 
 	// read files
-	_, files, err := storage.ReadFilesFromPaths(filepaths)
+	names, files, err := storage.ReadFilesFromPaths(filepaths)
 	if err != nil {
 		return err
 	}
 
+	// generate key-pair
+	privKey, pubKey, passphrase, err := generateNewBankKey()
+	if err != nil {
+		return err
+	}
+	// export publicKey
+	exportedPubKey, err := cr.ExportPublicKey(pubKey)
+	if err != nil {
+		return err
+	}
+	// export private key
+	exportedPrivKey, err := cr.SafeExportPrivateKey(privKey, passphrase)
+	if err != nil {
+		return err
+	}
+
+	// encrypt files
+	fileDescriptors := []*pb.FileDescriptor{}
+	encFiles := [][]byte{}
+	for i := 0; i < len(names); i++ {
+		encryptedFile, salt, iv, err := cr.EncryptData(files[i], passphrase)
+		if err != nil {
+			return err
+		}
+		descriptor := &pb.FileDescriptor{
+			Seq:  int32(i + 1),
+			Name: names[i],
+			Salt: salt,
+			Iv:   iv,
+		}
+		encFiles = append(encFiles, encryptedFile)
+		fileDescriptors = append(fileDescriptors, descriptor)
+	}
+
 	// generate merkle tree for files
 	var tree merkle.MerkleTree
-	if err = tree.BuildMerkeTree(files); err != nil {
+	if err = tree.BuildMerkeTree(encFiles); err != nil {
 		return err
 	}
 	merkleRoot := tree.GetMerkleRoot()
@@ -78,16 +119,23 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 		return errors.New("Invalid message type")
 	}
 
-	// TODO: sign request
-	pubkey := []byte("TODO")
-	sign, err := proto.Marshal(resp1)
+	// sign request
+	messageToSign := &pb.SignUploadRequestClient{
+		Nonce:   serverNonce,
+		PubKey:  exportedPubKey,
+		Nbfiles: int32(len(filepaths)),
+	}
+	sign, err := cr.SignMessage(messageToSign, privKey)
+	if err != nil {
+		return err
+	}
 
-	// generate request instance
+	// send request
 	req1 := &pb.UploadFilesRequest{
 		Phase: &pb.UploadFilesRequest_SignedResp{
 			SignedResp: &pb.ChallengeResponse{
 				Nonce:     serverNonce,
-				Pubkey:    pubkey,
+				Pubkey:    exportedPubKey,
 				Nbfiles:   int32(len(filepaths)),
 				Signature: sign,
 			},
@@ -98,7 +146,7 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 	}
 
 	// Send files
-	for i, file := range files {
+	for i, file := range encFiles {
 		req2 := &pb.UploadFilesRequest{
 			Phase: &pb.UploadFilesRequest_File{
 				File: &pb.FileMessage{
@@ -144,13 +192,9 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 	if !bytes.Equal(signedResponse.Nonce, clientNonce) {
 		return errors.New("Invalid challenge response nonce")
 	}
-	// TODO: verify signature
-	validSignature, err := verifyMerkleRootSignature(signedResponse)
-	if err != nil {
+	// verify signature
+	if err := verifyMerkleRootSignature(signedResponse, serverPubKey); err != nil {
 		return err
-	}
-	if !validSignature {
-		return errors.New("Invalid challenge signature")
 	}
 
 	// verify merkle root
@@ -158,11 +202,48 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 		return errors.New("Server-side merkle tree different from local")
 	}
 
-	// TODO: write everything to disk
+	// write bank descriptor
+	bankDescriptor := &pb.ClientBankDescriptor{
+		PrivKey:         exportedPrivKey,
+		Nbfiles:         int32(len(filepaths)),
+		MerkleRoot:      signedResponse.MerkleRoot,
+		FileDescriptors: fileDescriptors,
+	}
+	if err := storage.Client_WriteBankDescriptor(bankhome, bankDescriptor, serverName, bankName); err != nil {
+		return err // TODO: maybe try to store somewhere else to save the filebank
+	}
 
 	return nil
 }
 
-func verifyMerkleRootSignature(msg *pb.MerkleRoot) (bool, error) {
-	return true, nil // TODO
+func verifyMerkleRootSignature(resp *pb.MerkleRoot, pubKey ed25519.PublicKey) error {
+	signedMessage := &pb.SignMerkleRootServer{
+		Nonce:      resp.Nonce,
+		MerkleRoot: resp.MerkleRoot,
+	}
+	return cr.VerifySignature(signedMessage, pubKey, resp.Signature)
+}
+
+func generateNewBankKey() (ed25519.PrivateKey, ed25519.PublicKey, []byte, error) {
+	fmt.Printf("Enter password for bank: ")
+	firstPass, err := cr.ReadPassphrase()
+	fmt.Println()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	fmt.Printf("Re-enter password for bank: ")
+	pass, err := cr.ReadPassphrase()
+	fmt.Println()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if pass != firstPass {
+		log.Fatalln("Passwords do not match. Aborting.")
+	}
+	pubKey, privKey, err := cr.GenerateKeyPair()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return privKey, pubKey, []byte(pass), nil
 }
