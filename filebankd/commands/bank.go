@@ -162,9 +162,78 @@ Args:
 	},
 }
 
+var listBankCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List server banks, list bank contents",
+	Long: `- List bank names for specified server (only provide server flag)
+- List file names and identifiers for specified bank on specified server (provide server and bank-name flags)`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) > 0 {
+			fmt.Printf("Unexpected positional arguments\n\n")
+			cmd.Help()
+			return
+		}
+
+		serverName, err := cmd.Flags().GetString("server")
+		if err != nil {
+			fmt.Printf("%v\n\n", err)
+			cmd.Help()
+			return
+		}
+		if serverName == "" {
+			fmt.Printf("Missing flag: server flag is required\n\n")
+			cmd.Help()
+			return
+		}
+
+		bankName, err := cmd.Flags().GetString("bank-name")
+		if err != nil {
+			fmt.Printf("%v\n\n", err)
+			cmd.Help()
+			return
+		}
+		homepath, err := getHomePath(cmd)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		// verify home directory
+		ok, err := storage.IsHomeWellFormed(homepath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		} else if !ok {
+			fmt.Printf("Home %v does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
+			return
+		}
+
+		if bankName == "" { // listing banks from server
+			banks, err := storage.Client_ListBanks(homepath, serverName)
+			if err != nil {
+				fmt.Printf("%v\n", err)
+				return
+			}
+			fmt.Printf("Banks for server '%s'\n=====================================\n", serverName)
+			for _, bank := range banks {
+				fmt.Printf("\t%s\n", bank)
+			}
+		} else { // listing bank files
+			files, err := storage.Client_ListBankFiles(homepath, serverName, bankName)
+			if err != nil {
+				fmt.Printf("%v\n", err)
+				return
+			}
+			fmt.Printf("Files for bank '%s:%s'\n=====================================\n", serverName, bankName)
+			for i, filename := range files {
+				fmt.Printf("%5d %s\n", i+1, filename)
+			}
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(bankCmd)
-	bankCmd.AddCommand(createBankCmd, pullBankCmd)
+	bankCmd.AddCommand(createBankCmd, pullBankCmd, listBankCmd)
 
 	bankCmd.PersistentFlags().StringP("bank-name", "b", "", "unique local name for the filebank")
 	bankCmd.PersistentFlags().StringP("server", "s", "", "unique local name for the server")

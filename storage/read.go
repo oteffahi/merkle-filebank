@@ -164,6 +164,48 @@ func Client_ListServers(bankhome string) (serverNames []string, serverHosts []st
 	return serverNames, serverHosts, nil
 }
 
+func Client_ListBanks(bankhome string, serverName string) (bankNames []string, err error) {
+	if serverExists, err := Client_ServerExists(bankhome, serverName); err != nil {
+		return nil, err
+	} else if !serverExists {
+		return nil, fmt.Errorf("Server %s does not exist\n", serverName)
+	}
+	dscriptors, err := os.ReadDir(bankhome + "/client/" + "srv_" + serverName)
+	if err != nil {
+		return nil, err
+	}
+	for _, descriptor := range dscriptors {
+		fileName := descriptor.Name()
+		if strings.HasPrefix(fileName, "bnk_") && strings.HasSuffix(fileName, ".desc") {
+			bankName, _ := strings.CutPrefix(fileName, "bnk_")
+			bankName, _ = strings.CutSuffix(bankName, ".desc")
+			bankNames = append(bankNames, bankName)
+		}
+	}
+	return bankNames, nil
+}
+
+func Client_ListBankFiles(bankhome string, serverName string, bankName string) (fileNames []string, err error) {
+	if serverExists, err := Client_ServerExists(bankhome, serverName); err != nil {
+		return nil, err
+	} else if !serverExists {
+		return nil, fmt.Errorf("Server %s does not exist\n", serverName)
+	}
+	if bankExists, err := Client_BankExists(bankhome, serverName, bankName); err != nil {
+		return nil, err
+	} else if !bankExists {
+		return nil, fmt.Errorf("Bank %s:%s does not exist\n", serverName, bankName)
+	}
+	bankDesc, err := Client_ReadBankDescriptor(bankhome, serverName, bankName)
+	if err != nil {
+		return nil, err
+	}
+	for _, fileDesc := range bankDesc.FileDescriptors {
+		fileNames = append(fileNames, fileDesc.Name)
+	}
+	return fileNames, nil
+}
+
 func GetAllFilesPaths(rootPath string) ([]string, error) {
 	if rootPath[len(rootPath)-1] == '/' { // remove trailing slash
 		rootPath = rootPath[:len(rootPath)-1]
