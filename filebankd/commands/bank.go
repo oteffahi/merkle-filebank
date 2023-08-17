@@ -225,7 +225,7 @@ var listBankCmd = &cobra.Command{
 			}
 			fmt.Printf("Files for bank '%s:%s'\n=====================================\n", serverName, bankName)
 			for i, filename := range files {
-				fmt.Printf("%5d %s\n", i+1, filename)
+				fmt.Printf("%5d  %s\n", i+1, filename)
 			}
 		}
 	},

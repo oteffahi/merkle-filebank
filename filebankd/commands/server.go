@@ -130,8 +130,8 @@ Args:
 
 var listServersCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List local servers",
-	Long:  `List local servers that have been saved using the "add" command.`,
+	Short: "List locally saved servers",
+	Long:  `List servers that have been saved locally using the "add" command.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) > 0 {
 			fmt.Printf("Unexpected positional arguments\n\n")
@@ -160,10 +160,9 @@ var listServersCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		fmt.Printf("\tServer\t\tHost\n")
-		fmt.Printf("=======================================\n")
+		fmt.Printf("%20s %4s %20s\n===========================================================\n", "Name", "", "Host")
 		for i := 0; i < len(servers); i++ {
-			fmt.Printf("\t%v\t\t%v\n", servers[i], serverHosts[i])
+			fmt.Printf("%20s %4s %20s\n", servers[i], "", serverHosts[i])
 		}
 	},
 }

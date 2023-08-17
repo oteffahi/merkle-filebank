@@ -11,8 +11,10 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "filebankd",
 	Short: "A file storage system based on merkle trees",
-	Long: `MerkleFileBank is a CLI tool for secure file storage on servers.
-Files are encrypted before upload to server, and merkle trees are used to guarantee file intergrity after download from server`,
+	Long: `
+MerkleFileBank is a CLI tool for secure file storage on servers.
+
+Files are encrypted before upload to server, and merkle trees are used to guarantee file intergrity after download from server.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
