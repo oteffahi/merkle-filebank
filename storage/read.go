@@ -216,6 +216,7 @@ func GetAllFilesPaths(rootPath string) ([]string, error) {
 	}
 
 	if fileInfo.IsDir() {
+		fmt.Printf("Scanning %s\n", rootPath)
 		// get all new paths
 		files, err := os.ReadDir(rootPath)
 		if err != nil {
@@ -233,6 +234,7 @@ func GetAllFilesPaths(rootPath string) ([]string, error) {
 		}
 		return paths, nil
 	} else {
+		fmt.Printf("Adding %s\n", rootPath)
 		return []string{rootPath}, nil
 	}
 }
