@@ -90,6 +90,11 @@ func Client_WriteServerDescriptor(bankhome string, descriptor *pb.ServerDescript
 		return errors.New("Server " + serverName + " already exists")
 	}
 
+	// create server directory
+	if err := os.Mkdir(serverPath, os.ModeDir); err != nil {
+		return err
+	}
+
 	data, err := proto.Marshal(descriptor)
 	if err != nil {
 		return err

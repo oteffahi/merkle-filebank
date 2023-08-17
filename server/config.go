@@ -13,14 +13,14 @@ type ServerKeyPair struct {
 var ServerKeys *ServerKeyPair // global instance
 var bankhome string           // global path
 
-func (kp *ServerKeyPair) LoadKeyPair(privKey ed25519.PrivateKey) error {
-	if kp == nil {
+func LoadKeyPair(privKey ed25519.PrivateKey) error {
+	if ServerKeys == nil {
 		pubKey, ok := privKey.Public().(ed25519.PublicKey)
 		if !ok {
 			return errors.New("Invalid public key format")
 		}
 
-		kp = &ServerKeyPair{
+		ServerKeys = &ServerKeyPair{
 			privKey: privKey,
 			pubKey:  pubKey,
 		}

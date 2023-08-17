@@ -3,14 +3,24 @@ package client
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"errors"
+	"fmt"
 	"time"
 
 	cr "github.com/oteffahi/merkle-filebank/cryptography"
 	pb "github.com/oteffahi/merkle-filebank/proto"
+	"github.com/oteffahi/merkle-filebank/storage"
 )
 
 func CallAddNode(endpoint string, bankhome string, serverName string) error {
+	// verify that server does not exist locally
+	if serverExists, err := storage.Client_ServerExists(bankhome, serverName); err != nil {
+		return err
+	} else if serverExists {
+		return errors.New(fmt.Sprintf("Server %v already exist locally", serverName))
+	}
+
 	nonce, err := cr.Random12BytesNonce()
 	if err != nil {
 		return err
@@ -33,18 +43,33 @@ func CallAddNode(endpoint string, bankhome string, serverName string) error {
 	if !bytes.Equal(resp.Nonce, nonce) {
 		return errors.New("Invalid response message: bad nonce")
 	}
-	// TODO: verify signature
-	validSignature, err := verifySignature(resp)
+
+	// validate key as a correct ed25519 pubkey and import it
+	pubKey, err := cr.ImportPublicKey(resp.Pubkey)
 	if err != nil {
 		return err
 	}
-	if !validSignature {
-		return errors.New("Invalid response message: signature is invalid")
+
+	//verify signature
+	if err := verifyAddNodeResponseSignature(resp, pubKey); err != nil {
+		return err
 	}
-	// TODO: write pubkey and endpoint to file
+
+	// write pubkey and endpoint to file
+	serverDescriptor := &pb.ServerDescriptor{
+		PubKey: resp.Pubkey,
+		Host:   endpoint,
+	}
+	if err := storage.Client_WriteServerDescriptor(bankhome, serverDescriptor, serverName); err != nil {
+		return err
+	}
 	return nil
 }
 
-func verifySignature(resp *pb.AddNodeResponse) (bool, error) {
-	return true, nil // TODO
+func verifyAddNodeResponseSignature(resp *pb.AddNodeResponse, pubKey ed25519.PublicKey) error {
+	signedMessage := &pb.SignAddNodeServer{
+		Nonce:  resp.Nonce,
+		PubKey: resp.Pubkey,
+	}
+	return cr.VerifySignature(signedMessage, pubKey, resp.Signature)
 }

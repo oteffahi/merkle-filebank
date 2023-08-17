@@ -52,7 +52,7 @@ func RunServer(endpoint string) {
 			handleError(err)
 		}
 	}
-	if err := ServerKeys.LoadKeyPair(privKey); err != nil {
+	if err := LoadKeyPair(privKey); err != nil {
 		handleError(err)
 	}
 
