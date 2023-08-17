@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/pem"
 	"errors"
 
 	"github.com/youmark/pkcs8"
@@ -17,12 +18,22 @@ func GenerateKeyPair() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 }
 
 func SafeExportPrivateKey(key ed25519.PrivateKey, passphrase []byte) ([]byte, error) {
-	exportedKey, err := pkcs8.MarshalPrivateKey(key, passphrase, &pkcs8.Opts{Cipher: pkcs8.AES128GCM, KDFOpts: pkcs8.DefaultOpts.KDFOpts})
+	pkcs8key, err := pkcs8.MarshalPrivateKey(key, passphrase, &pkcs8.Opts{Cipher: pkcs8.AES128GCM, KDFOpts: pkcs8.DefaultOpts.KDFOpts})
+	if err != nil {
+		return nil, err
+	}
+
+	exportedKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "ENCRYPTED PRIVATE KEY",
+		Bytes: pkcs8key,
+	})
+
 	return exportedKey, err
 }
 
 func SafeImportPrivateKey(key []byte, passphrase []byte) (ed25519.PrivateKey, error) {
-	importedKey, err := pkcs8.ParsePKCS8PrivateKey(key, passphrase)
+	pkcs8Key, _ := pem.Decode(key)
+	importedKey, err := pkcs8.ParsePKCS8PrivateKey(pkcs8Key.Bytes, passphrase)
 	if err != nil {
 		return nil, err
 	}
@@ -34,15 +45,20 @@ func SafeImportPrivateKey(key []byte, passphrase []byte) (ed25519.PrivateKey, er
 }
 
 func ExportPublicKey(key ed25519.PublicKey) ([]byte, error) {
-	exportedKey, err := x509.MarshalPKIXPublicKey(key)
+	pkixKey, err := x509.MarshalPKIXPublicKey(key)
 	if err != nil {
 		return nil, err
 	}
+	exportedKey := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pkixKey,
+	})
 	return exportedKey, nil
 }
 
 func ImportPublicKey(key []byte) (ed25519.PublicKey, error) {
-	importedKey, err := x509.ParsePKIXPublicKey(key)
+	pkixKey, _ := pem.Decode(key)
+	importedKey, err := x509.ParsePKIXPublicKey(pkixKey.Bytes)
 	if err != nil {
 		return nil, err
 	}
