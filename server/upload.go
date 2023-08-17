@@ -118,7 +118,8 @@ func (c *fileBankServer) UploadFiles(stream pb.FileBankService_UploadFilesServer
 
 	// convert tree.Hashes from slice of arrays to slice of slices
 	merkleHashes := [][]byte{}
-	for _, hash := range tree.Hashes {
+	for i := 0; i < len(tree.Hashes); i++ {
+		hash := tree.Hashes[i]
 		merkleHashes = append(merkleHashes, hash[:])
 	}
 	// write bank descriptor
