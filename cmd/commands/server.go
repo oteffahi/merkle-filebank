@@ -49,6 +49,15 @@ var startCmd = &cobra.Command{
 			cmd.Help()
 			return
 		}
+		// verify home directory
+		ok, err := storage.IsHomeWellFormed(homepath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		} else if !ok {
+			fmt.Printf("Home %v does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
+			return
+		}
 
 		if err := startServer(addr, port, homepath); err != nil {
 			fmt.Println(err)
@@ -102,6 +111,16 @@ Args:
 			cmd.Help()
 			return
 		}
+		// verify home directory
+		ok, err := storage.IsHomeWellFormed(homepath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		} else if !ok {
+			fmt.Printf("Home %v does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
+			return
+		}
+
 		if err := addServer(homepath, serverName, addr, port); err != nil {
 			fmt.Println(err)
 			return
@@ -126,16 +145,16 @@ var listServersCmd = &cobra.Command{
 			cmd.Help()
 			return
 		}
-
-		// read storage
+		// verify home directory
 		ok, err := storage.IsHomeWellFormed(homepath)
 		if err != nil {
 			fmt.Println(err)
 			return
 		} else if !ok {
-			fmt.Printf("Home %v is does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
+			fmt.Printf("Home %v does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
 			return
 		}
+
 		servers, serverHosts, err := storage.Client_ListServers(homepath)
 		if err != nil {
 			fmt.Println(err)

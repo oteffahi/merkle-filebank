@@ -63,6 +63,15 @@ Args:
 			fmt.Println(err)
 			return
 		}
+		// verify home directory
+		ok, err := storage.IsHomeWellFormed(homepath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		} else if !ok {
+			fmt.Printf("Home %v does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
+			return
+		}
 
 		var paths []string
 		for _, arg := range args {
@@ -134,6 +143,15 @@ Args:
 		homepath, err := getHomePath(cmd)
 		if err != nil {
 			fmt.Println(err)
+			return
+		}
+		// verify home directory
+		ok, err := storage.IsHomeWellFormed(homepath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		} else if !ok {
+			fmt.Printf("Home %v does not exist or is malformed. You can use 'init' to fix it.\n", homepath)
 			return
 		}
 
