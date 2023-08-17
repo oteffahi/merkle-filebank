@@ -24,7 +24,10 @@ func (m MerkleTree) generateProof(leaf [32]byte) (*MerkleProof, error) {
 		return nil, err
 	}
 	if leafIndex == 0 {
-		return nil, errors.New("Cannot generate proof for merkle root")
+		return &MerkleProof{
+			Leaf:   leaf,
+			Hashes: [][32]byte{},
+		}, nil
 	}
 	if leafIndex == -1 {
 		return nil, errors.New("Leaf is not part of the tree")
@@ -56,10 +59,6 @@ func (p MerkleProof) GetProofInHex() []string {
 }
 
 func (p MerkleProof) VerifyFileProof(file []byte, merkleRoot [32]byte) (bool, error) {
-	if len(p.Hashes) == 0 {
-		return false, errors.New("Cannot verify empty proof")
-	}
-
 	leaf := cr.HashTwice(file)
 	return p.verifyLeafProof(leaf, merkleRoot), nil
 }
