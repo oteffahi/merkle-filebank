@@ -1,0 +1,54 @@
+version: "3.8"
+services:
+  server1:
+    image: oteffahi/filebankd:0.1.0
+    networks:
+      filebank:
+        aliases:
+        - server1.filebank.fr
+    entrypoint: filebankd start --passphrase testpassword
+
+  server2:
+    image: oteffahi/filebankd:0.1.0
+    networks:
+      filebank:
+        aliases:
+        - server2.filebank.fr
+    entrypoint: filebankd start --passphrase testpassword
+
+  server3:
+    image: oteffahi/filebankd:0.1.0
+    networks:
+      filebank:
+        aliases:
+          - server3.filebank.fr
+    entrypoint: filebankd start --passphrase testpassword
+
+  client1:
+    image: oteffahi/filebankd:0.1.0
+    networks:
+      filebank:
+        aliases:
+          - client1.filebank.fr
+    entrypoint: tail -F anything # keep container running
+
+  client2:
+    image: oteffahi/filebankd:0.1.0
+    networks:
+      filebank:
+        aliases:
+          - client2.filebank.fr
+    entrypoint: tail -F anything # keep container running
+
+  client3:
+    image: oteffahi/filebankd:0.1.0
+    networks:
+      filebank:
+        aliases:
+          - client3.filebank.fr
+    entrypoint: tail -F anything # keep container running
+
+networks:
+  filebank:
+    name: filebank-net
+    driver: bridge

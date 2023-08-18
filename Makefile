@@ -9,3 +9,15 @@ gencerts:
 	openssl req -newkey rsa:4096 -nodes -keyout ./certs/server/filebank-server-key.pem -out ./certs/server/filebank-server-req.pem -subj "/C=FR/ST=Ile de France/L=Paris/O=MerkleFileBank/OU=Server/CN=*.filebank.fr/emailAddress=servers@filebank.fr/"
 
 	openssl x509 -req -in ./certs/server/filebank-server-req.pem -days 60 -CA ./certs/ca/filebank-ca-cert.pem -CAkey ./certs/ca/filebank-ca-key.pem -CAcreateserial -out ./certs/server/filebank-server-cert.pem -extfile certs/ext.cnf
+
+build:
+	docker build -t oteffahi/filebankd:0.1.0 .
+
+start:
+	docker-compose up
+
+stop:
+	docker-compose stop
+
+down:
+	docker-compose down -v
