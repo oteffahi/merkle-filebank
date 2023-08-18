@@ -11,10 +11,10 @@ import (
 )
 
 func InitHome(bankhome string) error {
-	os.MkdirAll(bankhome+"/server", os.ModeDir)
-	os.MkdirAll(bankhome+"/client", os.ModeDir)
-	os.MkdirAll(bankhome+"/downloads", os.ModeDir)
-	os.MkdirAll(bankhome+"/cert", os.ModeDir)
+	os.MkdirAll(bankhome+"/server", os.ModeDir+0755)
+	os.MkdirAll(bankhome+"/client", os.ModeDir+0755)
+	os.MkdirAll(bankhome+"/downloads", os.ModeDir+0755)
+	os.MkdirAll(bankhome+"/cert", os.ModeDir+0755)
 	return nil
 }
 
@@ -40,7 +40,7 @@ func Server_WriteBankDescriptor(bankhome string, descriptor *pb.ServerBankDescri
 		return err
 	}
 
-	if err := os.Mkdir(bankhome+"/server/"+dirName, os.ModeDir); err != nil {
+	if err := os.Mkdir(bankhome+"/server/"+dirName, os.ModeDir+0755); err != nil {
 		return err
 	}
 	if err := os.WriteFile(bankhome+"/server/"+dirName+"/bank.desc", data, 0400); err != nil {
@@ -89,7 +89,7 @@ func Client_WriteServerDescriptor(bankhome string, descriptor *pb.ServerDescript
 	}
 
 	// create server directory
-	if err := os.Mkdir(serverPath, os.ModeDir); err != nil {
+	if err := os.Mkdir(serverPath, os.ModeDir+0755); err != nil {
 		return err
 	}
 
