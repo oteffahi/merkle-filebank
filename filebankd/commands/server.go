@@ -43,6 +43,13 @@ var startCmd = &cobra.Command{
 			return
 		}
 
+		passphrase, err := cmd.Flags().GetString("passphrase")
+		if err != nil {
+			fmt.Printf("%v\n\n", err)
+			cmd.Help()
+			return
+		}
+
 		homepath, err := getHomePath(cmd)
 		if err != nil {
 			fmt.Println(err)
@@ -59,7 +66,7 @@ var startCmd = &cobra.Command{
 			return
 		}
 
-		if err := startServer(addr, port, homepath); err != nil {
+		if err := startServer(addr, port, homepath, passphrase); err != nil {
 			fmt.Println(err)
 			return
 		}
@@ -178,6 +185,7 @@ func init() {
 
 	startCmd.Flags().StringP("address", "a", "0.0.0.0", "hostname or IP address of server")
 	startCmd.Flags().Int16P("port", "p", 5500, "TCP Port number on which the MerkleFileBank service will run")
+	startCmd.Flags().String("passphrase", "", "passphrase for the server key")
 }
 
 func addServer(homepath, serverName string, host string, port int16) error {
@@ -188,11 +196,11 @@ func addServer(homepath, serverName string, host string, port int16) error {
 	return nil
 }
 
-func startServer(host string, port int16, homepath string) error {
+func startServer(host string, port int16, homepath string, passphrase string) error {
 	endpoint := fmt.Sprintf("%s:%d", host, port)
 	if err := server.SetBankHome(homepath); err != nil {
 		return err
 	}
-	server.RunServer(endpoint)
+	server.RunServer(endpoint, passphrase)
 	return nil
 }

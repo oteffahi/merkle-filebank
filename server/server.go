@@ -22,7 +22,7 @@ func handleError(err error) {
 	log.Fatalf("Error occured when starting server: %v", err)
 }
 
-func RunServer(endpoint string) {
+func RunServer(endpoint string, passphrase string) {
 	var privKey ed25519.PrivateKey
 	if homeWellFormed, err := storage.IsHomeWellFormed(bankhome); err != nil {
 		handleError(err)
@@ -33,7 +33,7 @@ func RunServer(endpoint string) {
 		handleError(err)
 	} else if !keyExists {
 		// create new key
-		privKey, err = generateNewServerKey()
+		privKey, err = generateNewServerKey(passphrase)
 		if err != nil {
 			handleError(err)
 		}
@@ -43,11 +43,16 @@ func RunServer(endpoint string) {
 		if err != nil {
 			handleError(err)
 		}
-		fmt.Printf("Enter password for server key: ")
-		pass, err := cr.ReadPassphrase()
-		fmt.Println()
-		if err != nil {
-			handleError(err)
+		var pass string
+		if passphrase == "" {
+			fmt.Printf("Enter password for server key: ")
+			pass, err = cr.ReadPassphrase()
+			fmt.Println()
+			if err != nil {
+				handleError(err)
+			}
+		} else {
+			pass = passphrase
 		}
 		privKey, err = cr.SafeImportPrivateKey(encryptedKey, []byte(pass))
 		if err != nil {
@@ -90,22 +95,27 @@ func RunServer(endpoint string) {
 	}
 }
 
-func generateNewServerKey() (ed25519.PrivateKey, error) {
+func generateNewServerKey(passphrase string) (ed25519.PrivateKey, error) {
 	fmt.Println("Server key not found. Creating new key")
-	fmt.Printf("Enter password for key: ")
-	firstPass, err := cr.ReadPassphrase()
-	fmt.Println()
-	if err != nil {
-		return nil, err
-	}
-	fmt.Printf("Re-enter password for key: ")
-	pass, err := cr.ReadPassphrase()
-	fmt.Println()
-	if err != nil {
-		return nil, err
-	}
-	if pass != firstPass {
-		log.Fatalln("Passwords do not match. Aborting.")
+	var pass string
+	if passphrase == "" {
+		fmt.Printf("Enter password for key: ")
+		firstPass, err := cr.ReadPassphrase()
+		fmt.Println()
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("Re-enter password for key: ")
+		pass, err = cr.ReadPassphrase()
+		fmt.Println()
+		if err != nil {
+			return nil, err
+		}
+		if pass != firstPass {
+			log.Fatalln("Passwords do not match. Aborting.")
+		}
+	} else {
+		pass = passphrase
 	}
 	_, privKey, err := cr.GenerateKeyPair()
 	if err != nil {
