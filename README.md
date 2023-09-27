@@ -2,6 +2,10 @@
 
 A CLI tool for running and using a merkle-based file storage service. The project is entirely developped in Go.
 
+This project was developed within a 7-day coding challenge.
+
+Features:
+
 - The Merkle tree generation code is inspired from [OpenZeppelin's implementation](https://github.com/OpenZeppelin/merkle-tree).
 - Client-Server communications use google RPC (gRPC) and Protobuf.
 - Data is stored within a simple filesystem-based directory tree, using Protobuf for serialization.
