@@ -14,7 +14,7 @@ func TestNominalProof(t *testing.T) {
 		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
 	}
 
-	err := tree.BuildMerkeTree(files)
+	err := tree.BuildMerkleTree(files)
 
 	if err != nil {
 		t.Errorf("Error occured when generating tree: %v", err)
@@ -48,7 +48,7 @@ func TestFailVerification(t *testing.T) {
 		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
 	}
 
-	err := tree.BuildMerkeTree(files)
+	err := tree.BuildMerkleTree(files)
 
 	if err != nil {
 		t.Errorf("Error occured when generating tree: %v", err)

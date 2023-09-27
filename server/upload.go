@@ -188,6 +188,6 @@ func verifyBankExistence(clientPubKey []byte) (bool, error) {
 
 func generateMerkleTreeForFiles(files [][]byte) (*merkle.MerkleTree, error) {
 	var tree merkle.MerkleTree
-	err := tree.BuildMerkeTree(files)
+	err := tree.BuildMerkleTree(files)
 	return &tree, err
 }

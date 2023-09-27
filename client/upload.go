@@ -87,7 +87,7 @@ func CallUploadFiles(bankhome, serverName, bankName string, filepaths []string) 
 
 	// generate merkle tree for files
 	var tree merkle.MerkleTree
-	if err = tree.BuildMerkeTree(encFiles); err != nil {
+	if err = tree.BuildMerkleTree(encFiles); err != nil {
 		return err
 	}
 	merkleRoot := tree.GetMerkleRoot()

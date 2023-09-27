@@ -29,7 +29,7 @@ func (m MerkleTree) GetTreeInHex() []string {
 	return hexTree
 }
 
-func (m *MerkleTree) BuildMerkeTree(files [][]byte) error {
+func (m *MerkleTree) BuildMerkleTree(files [][]byte) error {
 	if len(files) == 0 {
 		return errors.New("Cannot create tree from empty slice")
 	}

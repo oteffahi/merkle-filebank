@@ -11,7 +11,7 @@ func TestNoEmptyTree(t *testing.T) {
 
 	// testData
 	var files [][]byte
-	err := tree.BuildMerkeTree(files)
+	err := tree.BuildMerkleTree(files)
 
 	if err == nil {
 		t.Errorf("Expected error, got no error")
@@ -30,7 +30,7 @@ func TestNominalTree(t *testing.T) {
 	files := [][]byte{e, b, c, d, a}
 	expectedRoot := "49e5171f64c94c819582d1b433156a604b916ef5774765be78c6dc646585a7fa"
 
-	err := tree.BuildMerkeTree(files)
+	err := tree.BuildMerkleTree(files)
 
 	if err != nil {
 		t.Errorf("Error occured when creating tree: %v", err)
