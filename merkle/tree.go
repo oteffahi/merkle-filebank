@@ -47,18 +47,28 @@ func (m *MerkleTree) BuildMerkleTree(files [][]byte) error {
 }
 
 func (m MerkleTree) getNodeIndex(leaf [32]byte) (int, error) {
-	if len(m.Hashes) == 0 {
+	size := len(m.Hashes)
+	if size == 0 {
 		return -1, errors.New("Cannot search in empty tree")
 	}
-
-	for index, value := range m.Hashes {
-		if value == leaf {
-			return index, nil
+	nbLeafs := (size + 1) / 2
+	low := size - nbLeafs
+	high := size - 1
+	// binary search in leafs
+	for low <= high {
+		median := (low + high) / 2
+		if m.Hashes[median] == leaf {
+			return median, nil
+		} else if !cr.CompareHashes(m.Hashes[median], leaf) {
+			low = median + 1
+		} else {
+			high = median - 1
 		}
 	}
-
-	// not found
-	return -1, nil
+	if low == size || m.Hashes[low] != leaf {
+		return -1, nil
+	}
+	return low, nil
 }
 
 func (m MerkleTree) GenerateProofForFile(file []byte) (*MerkleProof, error) {
