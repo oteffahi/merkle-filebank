@@ -1,6 +1,6 @@
 # Merkle File Bank
 
-A CLI tool for running and using a merkle-based file storage service. The project is entirely developped in Go.
+A CLI tool for running and using a merkle-based file storage service. The project is entirely developed in Go.
 
 This project was developed within a 7-day coding challenge.
 
