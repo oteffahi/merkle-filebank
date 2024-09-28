@@ -12,21 +12,6 @@ type MerkleTree struct {
 	Hashes [][32]byte
 }
 
-func (m MerkleTree) GetMerkleRoot() [32]byte {
-	if len(m.Hashes) > 0 {
-		return m.Hashes[0]
-	}
-	return [32]byte{}
-}
-
-func (m MerkleTree) GetTreeInHex() []string {
-	var hexTree []string
-	for _, hash := range m.Hashes {
-		hexTree = append(hexTree, hex.EncodeToString(hash[:]))
-	}
-	return hexTree
-}
-
 func (m *MerkleTree) BuildMerkleTree(files [][]byte) error {
 	if len(files) == 0 {
 		return errors.New("cannot create tree from empty slice")
@@ -38,6 +23,30 @@ func (m *MerkleTree) BuildMerkleTree(files [][]byte) error {
 	tree := merkleTreeFromLeafs(leafs)
 	m.Hashes = tree
 	return nil
+}
+
+func (m MerkleTree) GetMerkleRoot() [32]byte {
+	if len(m.Hashes) > 0 {
+		return m.Hashes[0]
+	}
+	return [32]byte{}
+}
+
+func (m MerkleTree) GenerateProofForFile(file []byte) (*MerkleProof, error) {
+	leaf := cr.HashTwice(file)
+	proof, err := m.generateProof(leaf)
+	if err != nil {
+		return nil, err
+	}
+	return proof, nil
+}
+
+func (m MerkleTree) GetTreeInHex() []string {
+	var hexTree []string
+	for _, hash := range m.Hashes {
+		hexTree = append(hexTree, hex.EncodeToString(hash[:]))
+	}
+	return hexTree
 }
 
 func (m MerkleTree) getNodeIndex(leaf [32]byte) (int, error) {
@@ -63,15 +72,6 @@ func (m MerkleTree) getNodeIndex(leaf [32]byte) (int, error) {
 		return -1, nil
 	}
 	return low, nil
-}
-
-func (m MerkleTree) GenerateProofForFile(file []byte) (*MerkleProof, error) {
-	leaf := cr.HashTwice(file)
-	proof, err := m.generateProof(leaf)
-	if err != nil {
-		return nil, err
-	}
-	return proof, nil
 }
 
 func merkleTreeFromLeafs(leafs [][32]byte) [][32]byte {

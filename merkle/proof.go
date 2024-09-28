@@ -12,6 +12,19 @@ type MerkleProof struct {
 	Hashes [][32]byte
 }
 
+func (p MerkleProof) VerifyFileProof(file []byte, merkleRoot [32]byte) (bool, error) {
+	leaf := cr.HashTwice(file)
+	return p.verifyLeafProof(leaf, merkleRoot), nil
+}
+
+func (p MerkleProof) GetProofInHex() []string {
+	var hexProof []string
+	for _, hash := range p.Hashes {
+		hexProof = append(hexProof, hex.EncodeToString(hash[:]))
+	}
+	return hexProof
+}
+
 func (m MerkleTree) generateProof(leaf [32]byte) (*MerkleProof, error) {
 	if len(m.Hashes) == 0 {
 		return nil, errors.New("cannot generate proof from empty tree")
@@ -41,19 +54,6 @@ func (m MerkleTree) generateProof(leaf [32]byte) (*MerkleProof, error) {
 		Leaf:   leaf,
 		Hashes: proof,
 	}, nil
-}
-
-func (p MerkleProof) GetProofInHex() []string {
-	var hexProof []string
-	for _, hash := range p.Hashes {
-		hexProof = append(hexProof, hex.EncodeToString(hash[:]))
-	}
-	return hexProof
-}
-
-func (p MerkleProof) VerifyFileProof(file []byte, merkleRoot [32]byte) (bool, error) {
-	leaf := cr.HashTwice(file)
-	return p.verifyLeafProof(leaf, merkleRoot), nil
 }
 
 func (p MerkleProof) verifyLeafProof(leaf [32]byte, merkleRoot [32]byte) bool {
