@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"sort"
+	"sync/atomic"
 
 	cr "github.com/oteffahi/merkle-filebank/cryptography"
 )
@@ -75,6 +76,9 @@ func (m MerkleTree) getNodeIndex(leaf [32]byte) (int, error) {
 }
 
 func merkleTreeFromLeafs(leafs [][32]byte) [][32]byte {
+	if len(leafs) == 1 {
+		return leafs[:1]
+	}
 	// sort leafs
 	sort.Slice(leafs, func(i, j int) bool {
 		return cr.CompareHashes(leafs[i], leafs[j])
@@ -86,10 +90,54 @@ func merkleTreeFromLeafs(leafs [][32]byte) [][32]byte {
 		tree[treeLen-1-i] = leaf
 	}
 	// compute nodes
-	for i := treeLen - len(leafs) - 1; i >= 0; i-- {
-		tree[i] = concatAndHash(tree[2*i+1], tree[2*i+2])
+	atomicBuffers := make([]atomic.Pointer[[32]byte], treeLen-len(leafs))
+	notifyEnd := make(chan struct{})
+	for i := treeLen - 1; i > treeLen-len(leafs); i -= 2 {
+		go merkleBuildWorker(tree, atomicBuffers, i, notifyEnd)
 	}
+	<-notifyEnd
 	return tree
+}
+
+func merkleBuildWorker(tree [][32]byte, atomicBuffers []atomic.Pointer[[32]byte], index1 int, ch chan<- struct{}) {
+	var (
+		index2      int
+		resultIndex int
+		elm1        *[32]byte
+		elm2        *[32]byte
+	)
+	// compute other index
+	if index1%2 == 0 {
+		index2 = index1 - 1
+	} else {
+		index2 = index1 + 1
+	}
+	// fetch nodes from leafs/atomicBuffer
+	mapIndexes := func(a, b int, f func(int) *[32]byte) (elm1 *[32]byte, elm2 *[32]byte) {
+		return f(a), f(b)
+	}
+	elm1, elm2 = mapIndexes(index1, index2, func(i int) *[32]byte {
+		if i >= len(atomicBuffers) {
+			return &tree[i]
+		} else {
+			return atomicBuffers[i].Load()
+		}
+	})
+	if elm1 == nil || elm2 == nil {
+		// This goroutine has computed one of the two buffers in the previous call
+		// if the other buffer is empty, the goroutine computing that buffer will continue
+		return
+	}
+	// compute next node
+	resultIndex = min(index1, index2) / 2
+	tree[resultIndex] = concatAndHash(*elm1, *elm2)
+	atomicBuffers[resultIndex].Store(&tree[resultIndex])
+	// start computation of next level, or terminate if root reached
+	if resultIndex == 0 {
+		ch <- struct{}{}
+	} else {
+		merkleBuildWorker(tree, atomicBuffers, resultIndex, ch)
+	}
 }
 
 func concatAndHash(hash1 [32]byte, hash2 [32]byte) [32]byte {
