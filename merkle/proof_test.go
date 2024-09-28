@@ -32,6 +32,13 @@ func TestNominalProof(t *testing.T) {
 	}
 }
 
+func TestNoProofFromEmptyTree(t *testing.T) {
+	var tree MerkleTree
+	if _, err := tree.generateProof([32]byte{}); err == nil {
+		t.Errorf("generateProof should return error when tree is empty")
+	}
+}
+
 func TestFailVerification(t *testing.T) {
 	// testData
 	var files [][]byte
