@@ -47,7 +47,7 @@ func TestFailVerification(t *testing.T) {
 	var tree MerkleTree
 	if err := tree.BuildMerkleTree(files); err != nil {
 		t.Errorf("error when generating tree: %v", err)
-		return
+		t.FailNow()
 	}
 	proof, err := tree.GenerateProofForFile(files[0])
 	if err != nil {
