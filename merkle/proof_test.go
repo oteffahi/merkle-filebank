@@ -6,67 +6,53 @@ import (
 )
 
 func TestNominalProof(t *testing.T) {
-	var tree MerkleTree
-
 	// testData
 	var files [][]byte
 	for i := 0; i < 100; i++ {
 		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
 	}
 
-	err := tree.BuildMerkleTree(files)
-
-	if err != nil {
-		t.Errorf("Error occured when generating tree: %v", err)
-		return
+	var tree MerkleTree
+	if err := tree.BuildMerkleTree(files); err != nil {
+		t.Errorf("error occured when generating tree: %v", err)
+		t.FailNow()
 	}
-
 	for i, file := range files {
 		proof, err := tree.GenerateProofForFile(file)
 		if err != nil {
-			t.Errorf("Error occured when generating proof: %v", err)
-			return
+			t.Errorf("error occured when generating proof: %v", err)
+			t.FailNow()
 		}
 		isValidProof, err := proof.VerifyFileProof(file, tree.GetMerkleRoot())
 		if err != nil {
-			t.Errorf("Error occured when verifying proof: %v", err)
-			return
-		}
-		if !isValidProof {
-			t.Errorf("Failed to verify proof for file %v", i)
-			return
+			t.Errorf("error occured when verifying proof: %v", err)
+		} else if !isValidProof {
+			t.Errorf("failed to verify proof for file %v", i)
 		}
 	}
 }
 
 func TestFailVerification(t *testing.T) {
-	var tree MerkleTree
-
 	// testData
 	var files [][]byte
 	for i := 0; i < 100; i++ {
 		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
 	}
 
-	err := tree.BuildMerkleTree(files)
-
-	if err != nil {
-		t.Errorf("Error occured when generating tree: %v", err)
+	var tree MerkleTree
+	if err := tree.BuildMerkleTree(files); err != nil {
+		t.Errorf("error when generating tree: %v", err)
 		return
 	}
-
 	proof, err := tree.GenerateProofForFile(files[0])
 	if err != nil {
-		t.Errorf("Error occured when generating proof: %v", err)
-		return
+		t.Errorf("error when generating proof: %v", err)
+		t.FailNow()
 	}
 	isValidProof, err := proof.VerifyFileProof(files[5], tree.GetMerkleRoot())
 	if err != nil {
-		t.Errorf("Error occured when verifying proof: %v", err)
-		return
-	}
-	if isValidProof {
-		t.Errorf("Expected proof verification to fail, got success")
-		return
+		t.Errorf("error when verifying proof: %v", err)
+	} else if isValidProof {
+		t.Errorf("expected proof verification to fail, got success")
 	}
 }

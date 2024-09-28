@@ -21,35 +21,29 @@ func (m MerkleTree) GetMerkleRoot() [32]byte {
 
 func (m MerkleTree) GetTreeInHex() []string {
 	var hexTree []string
-
 	for _, hash := range m.Hashes {
 		hexTree = append(hexTree, hex.EncodeToString(hash[:]))
 	}
-
 	return hexTree
 }
 
 func (m *MerkleTree) BuildMerkleTree(files [][]byte) error {
 	if len(files) == 0 {
-		return errors.New("Cannot create tree from empty slice")
+		return errors.New("cannot create tree from empty slice")
 	}
 	var leafs [][32]byte
-
 	for _, file := range files {
 		leafs = append(leafs, cr.HashTwice(file))
 	}
-
 	tree := merkleTreeFromLeafs(leafs)
-
 	m.Hashes = tree
-
 	return nil
 }
 
 func (m MerkleTree) getNodeIndex(leaf [32]byte) (int, error) {
 	size := len(m.Hashes)
 	if size == 0 {
-		return -1, errors.New("Cannot search in empty tree")
+		return -1, errors.New("cannot search in empty tree")
 	}
 	nbLeafs := (size + 1) / 2
 	low := size - nbLeafs
@@ -73,12 +67,10 @@ func (m MerkleTree) getNodeIndex(leaf [32]byte) (int, error) {
 
 func (m MerkleTree) GenerateProofForFile(file []byte) (*MerkleProof, error) {
 	leaf := cr.HashTwice(file)
-
 	proof, err := m.generateProof(leaf)
 	if err != nil {
 		return nil, err
 	}
-
 	return proof, nil
 }
 
@@ -87,20 +79,16 @@ func merkleTreeFromLeafs(leafs [][32]byte) [][32]byte {
 	sort.Slice(leafs, func(i, j int) bool {
 		return cr.CompareHashes(leafs[i], leafs[j])
 	})
-
 	treeLen := len(leafs)*2 - 1
 	tree := make([][32]byte, treeLen)
-
 	// insert leafs at end of buffer in reverse order
 	for i, leaf := range leafs {
 		tree[treeLen-1-i] = leaf
 	}
-
 	// compute nodes
 	for i := treeLen - len(leafs) - 1; i >= 0; i-- {
 		tree[i] = concatAndHash(tree[2*i+1], tree[2*i+2])
 	}
-
 	return tree
 }
 

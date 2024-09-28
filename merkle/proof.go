@@ -14,12 +14,10 @@ type MerkleProof struct {
 
 func (m MerkleTree) generateProof(leaf [32]byte) (*MerkleProof, error) {
 	if len(m.Hashes) == 0 {
-		return nil, errors.New("Cannot generate proof from empty tree")
+		return nil, errors.New("cannot generate proof from empty tree")
 	}
-
 	// get leaf position in tree
 	leafIndex, err := m.getNodeIndex(leaf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -30,18 +28,15 @@ func (m MerkleTree) generateProof(leaf [32]byte) (*MerkleProof, error) {
 		}, nil
 	}
 	if leafIndex == -1 {
-		return nil, errors.New("Leaf is not part of the tree")
+		return nil, errors.New("leaf is not part of the tree")
 	}
-
 	// TODO: check that found index is a leaf
-
 	var proof [][32]byte
 	currentIndex := leafIndex
 	for currentIndex != 0 {
 		proof = append(proof, m.Hashes[getNodeSiblingIndex(currentIndex)])
 		currentIndex = getNodeParentIndex(currentIndex)
 	}
-
 	return &MerkleProof{
 		Leaf:   leaf,
 		Hashes: proof,
@@ -50,11 +45,9 @@ func (m MerkleTree) generateProof(leaf [32]byte) (*MerkleProof, error) {
 
 func (p MerkleProof) GetProofInHex() []string {
 	var hexProof []string
-
 	for _, hash := range p.Hashes {
 		hexProof = append(hexProof, hex.EncodeToString(hash[:]))
 	}
-
 	return hexProof
 }
 
