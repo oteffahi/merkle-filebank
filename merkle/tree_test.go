@@ -31,8 +31,9 @@ func TestNominalTree(t *testing.T) {
 		t.Errorf("error occured when building tree: %v", err)
 		t.FailNow()
 	}
-	gotRoot := tree.GetMerkleRoot()
-	if expectedRoot != hex.EncodeToString(gotRoot[:]) {
+	root := tree.GetMerkleRoot()
+	gotRoot := hex.EncodeToString(root[:])
+	if expectedRoot != gotRoot {
 		// print full tree for debugging
 		hexTree := tree.GetTreeInHex()
 		for _, hash := range hexTree {
