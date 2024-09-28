@@ -92,6 +92,7 @@ func merkleTreeFromLeafs(leafs [][32]byte) [][32]byte {
 	// compute nodes
 	atomicBuffers := make([]atomic.Pointer[[32]byte], treeLen-len(leafs))
 	notifyEnd := make(chan struct{})
+	defer close(notifyEnd)
 	for i := treeLen - 1; i > treeLen-len(leafs); i -= 2 {
 		go merkleBuildWorker(tree, atomicBuffers, i, notifyEnd)
 	}
