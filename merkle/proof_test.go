@@ -6,67 +6,56 @@ import (
 )
 
 func TestNominalProof(t *testing.T) {
-	var tree MerkleTree
-
 	// testData
 	var files [][]byte
 	for i := 0; i < 100; i++ {
 		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
 	}
 
-	err := tree.BuildMerkleTree(files)
-
-	if err != nil {
-		t.Errorf("Error occured when generating tree: %v", err)
-		return
+	var tree MerkleTree
+	if err := tree.BuildMerkleTree(files); err != nil {
+		t.Errorf("error occured when generating tree: %v", err)
+		t.FailNow()
 	}
-
 	for i, file := range files {
 		proof, err := tree.GenerateProofForFile(file)
 		if err != nil {
-			t.Errorf("Error occured when generating proof: %v", err)
-			return
+			t.Errorf("error occured when generating proof: %v", err)
+			t.FailNow()
 		}
-		isValidProof, err := proof.VerifyFileProof(file, tree.GetMerkleRoot())
-		if err != nil {
-			t.Errorf("Error occured when verifying proof: %v", err)
-			return
-		}
-		if !isValidProof {
-			t.Errorf("Failed to verify proof for file %v", i)
-			return
+
+		if isValidProof := proof.VerifyFileProof(file, tree.GetMerkleRoot()); !isValidProof {
+			t.Errorf("failed to verify proof for file %v", i)
 		}
 	}
 }
 
-func TestFailVerification(t *testing.T) {
+func TestNoProofFromEmptyTree(t *testing.T) {
 	var tree MerkleTree
+	if _, err := tree.generateProof([32]byte{}); err == nil {
+		t.Errorf("generateProof should return error when tree is empty")
+	}
+}
 
+func TestFailVerification(t *testing.T) {
 	// testData
 	var files [][]byte
 	for i := 0; i < 100; i++ {
 		files = append(files, []byte(fmt.Sprintf("TEST%d", i)))
 	}
 
-	err := tree.BuildMerkleTree(files)
-
-	if err != nil {
-		t.Errorf("Error occured when generating tree: %v", err)
-		return
+	var tree MerkleTree
+	if err := tree.BuildMerkleTree(files); err != nil {
+		t.Errorf("error when generating tree: %v", err)
+		t.FailNow()
 	}
-
 	proof, err := tree.GenerateProofForFile(files[0])
 	if err != nil {
-		t.Errorf("Error occured when generating proof: %v", err)
-		return
+		t.Errorf("error when generating proof: %v", err)
+		t.FailNow()
 	}
-	isValidProof, err := proof.VerifyFileProof(files[5], tree.GetMerkleRoot())
-	if err != nil {
-		t.Errorf("Error occured when verifying proof: %v", err)
-		return
-	}
-	if isValidProof {
-		t.Errorf("Expected proof verification to fail, got success")
-		return
+
+	if isValidProof := proof.VerifyFileProof(files[5], tree.GetMerkleRoot()); isValidProof {
+		t.Errorf("expected proof verification to fail, got success")
 	}
 }
