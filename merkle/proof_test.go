@@ -23,10 +23,8 @@ func TestNominalProof(t *testing.T) {
 			t.Errorf("error occured when generating proof: %v", err)
 			t.FailNow()
 		}
-		isValidProof, err := proof.VerifyFileProof(file, tree.GetMerkleRoot())
-		if err != nil {
-			t.Errorf("error occured when verifying proof: %v", err)
-		} else if !isValidProof {
+
+		if isValidProof := proof.VerifyFileProof(file, tree.GetMerkleRoot()); !isValidProof {
 			t.Errorf("failed to verify proof for file %v", i)
 		}
 	}
@@ -56,10 +54,8 @@ func TestFailVerification(t *testing.T) {
 		t.Errorf("error when generating proof: %v", err)
 		t.FailNow()
 	}
-	isValidProof, err := proof.VerifyFileProof(files[5], tree.GetMerkleRoot())
-	if err != nil {
-		t.Errorf("error when verifying proof: %v", err)
-	} else if isValidProof {
+
+	if isValidProof := proof.VerifyFileProof(files[5], tree.GetMerkleRoot()); isValidProof {
 		t.Errorf("expected proof verification to fail, got success")
 	}
 }

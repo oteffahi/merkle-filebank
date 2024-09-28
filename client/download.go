@@ -151,11 +151,8 @@ func CallDownloadFiles(bankhome, serverName, bankName string, fileNumber int) er
 	merkleProof := merkle.MerkleProof{
 		Hashes: serverProof,
 	}
-	validProof, err := merkleProof.VerifyFileProof(fileAndProof.File, [32]byte(bank.MerkleRoot))
-	if err != nil {
-		return err
-	}
-	if !validProof {
+
+	if validProof := merkleProof.VerifyFileProof(fileAndProof.File, [32]byte(bank.MerkleRoot)); !validProof {
 		return errors.New("Invalid merkle proof")
 	}
 

@@ -12,9 +12,9 @@ type MerkleProof struct {
 	Hashes [][32]byte
 }
 
-func (p MerkleProof) VerifyFileProof(file []byte, merkleRoot [32]byte) (bool, error) {
+func (p MerkleProof) VerifyFileProof(file []byte, merkleRoot [32]byte) bool {
 	leaf := cr.HashTwice(file)
-	return p.verifyLeafProof(leaf, merkleRoot), nil
+	return p.verifyLeafProof(leaf, merkleRoot)
 }
 
 func (p MerkleProof) GetProofInHex() []string {
